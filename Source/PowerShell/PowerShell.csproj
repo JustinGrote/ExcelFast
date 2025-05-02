@@ -1,0 +1,27 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Sdk="Microsoft.NET.Sdk">
+  <Target Name="Default" />
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Label="BuildOptions">
+    <DebugType>portable</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <PublishDir>../../Release</PublishDir>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup Label="Dependencies">
+    <ProjectReference Include="..\ExcelFast\ExcelFast.csproj" />
+    <PackageReference Include="System.Management.Automation" Version="7.4.0" ExcludeAssets="ContentFiles" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- <Target Name="CopyPsd1ToRelease" AfterTargets="Publish">
+    <Copy SourceFiles="ScriptFeedbackProvider.psd1" DestinationFolder="$(PublishDir)" />
+  </Target> -->
+
+</Project>

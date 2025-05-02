@@ -1,0 +1,22 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Sdk="Microsoft.NET.Sdk">
+	<Target Name="Default" />
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<LangVersion>13.0</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup Label="BuildOptions">
+		<DebugType>portable</DebugType>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<GenerateDependencyFile>false</GenerateDependencyFile>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+	</PropertyGroup>
+
+	<ItemGroup Label="Dependencies">
+		<PackageReference Include="ClosedXML" Version="0.104.2" />
+		<PackageReference Include="MiniExcel" Version="1.41.1" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,370 @@
+﻿License notice for System.Management.Automation (v7.4.0)
+------------------------------------
+
+https://github.com/PowerShell/PowerShell
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for ClosedXML (v0.104.2)
+------------------------------------
+
+https://github.com/ClosedXML/ClosedXML at 3dfd3414f3aa32fa8ffee7124478ca9ac5fe6945
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for ClosedXML.Parser (v1.2.0)
+------------------------------------
+
+https://github.com/ClosedXML/ClosedXML.Parser at aaf2ade77aa160d7e929088320eab562b2df6851
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for DocumentFormat.OpenXml (v3.1.1)
+------------------------------------
+
+https://github.com/dotnet/Open-XML-SDK at f9e6ad7524e22b6b1f932deabc9055201b7870c0
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for DocumentFormat.OpenXml.Framework (v3.1.1)
+------------------------------------
+
+https://github.com/dotnet/Open-XML-SDK at f9e6ad7524e22b6b1f932deabc9055201b7870c0
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for ExcelNumberFormat (v1.1.0)
+------------------------------------
+
+https://github.com/andersnm/ExcelNumberFormat
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.ApplicationInsights (v2.21.0)
+------------------------------------
+
+https://github.com/Microsoft/ApplicationInsights-dotnet at 5e2e7ddda961ec0e16a75b1ae0a37f6a13c777f5
+
+https://go.microsoft.com/fwlink/?LinkId=392727
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Management.Infrastructure (v3.0.0)
+------------------------------------
+
+https://github.com/PowerShell/MMI
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Management.Infrastructure.Runtime.Unix (v3.0.0)
+------------------------------------
+
+https://github.com/PowerShell/MMI
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Management.Infrastructure.Runtime.Win (v3.0.0)
+------------------------------------
+
+https://github.com/PowerShell/MMI
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Available at https://aka.ms/deprecateLicenseUrl
+
+LICENSE.txt
+
+
+License notice for Microsoft.PowerShell.CoreCLR.Eventing (v7.4.0)
+------------------------------------
+
+https://github.com/PowerShell/PowerShell
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.PowerShell.Native (v7.4.0)
+------------------------------------
+
+https://github.com/PowerShell/PowerShell-Native
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Security.Extensions (v1.2.0)
+------------------------------------
+
+https://aka.ms/getfilesiginforedist
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for Microsoft.Win32.Registry.AccessControl (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for MiniExcel (v1.41.1)
+------------------------------------
+
+https://github.com/mini-software/MiniExcel at 38eb60cdc24a6d45d35001419aa70448110a5394
+
+Wei Lin, 2021 onwards
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for Newtonsoft.Json (v13.0.3)
+------------------------------------
+
+https://github.com/JamesNK/Newtonsoft.Json at 0a2e291c0d9c0c7675d445703e51750363a549ef
+
+https://www.newtonsoft.com/json
+
+Copyright © James Newton-King 2008
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for RBush (v4.0.0)
+------------------------------------
+
+https://github.com/viceroypenguin/RBush at b8690322abac35d835baa2fdca4a3918ed77a910
+
+Copyright © 2017-2024 Turning Code, LLC (and others)
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for SixLabors.Fonts (v1.0.0)
+------------------------------------
+
+https://github.com/SixLabors/Fonts at 32bef42997adb10268369ca149777f00e4241ce9
+
+Copyright © Six Labors
+
+Licensed under Apache-2.0
+
+Available at https://licenses.nuget.org/Apache-2.0
+
+
+License notice for System.CodeDom (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Configuration.ConfigurationManager (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Diagnostics.EventLog (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.DirectoryServices (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.IO.Packaging (v8.0.1)
+------------------------------------
+
+https://github.com/dotnet/runtime at 81cabf2857a01351e5ab578947c7403a5b128ad1
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Management (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Security.AccessControl (v6.0.2-mauipre.1.22102.15)
+------------------------------------
+
+https://github.com/dotnet/runtime at 3da69c23c1f8f502ec2eb1d44ff2fe7522210282
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Security.Cryptography.Pkcs (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Security.Cryptography.ProtectedData (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Security.Permissions (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
+License notice for System.Windows.Extensions (v8.0.0)
+------------------------------------
+
+https://github.com/dotnet/runtime at 5535e31a712343a63f5d7d796cd874e563e5ac14
+
+https://dot.net/
+
+Copyright © Microsoft Corporation. All rights reserved.
+
+Licensed under MIT
+
+Available at https://licenses.nuget.org/MIT
+
+
