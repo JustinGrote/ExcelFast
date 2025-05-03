@@ -2,7 +2,7 @@
   <Target Name="Default" />
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>13.0</LangVersion>
+    <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -16,6 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup Label="Dependencies">
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <ProjectReference Include="..\ExcelFast\ExcelFast.csproj" />
     <PackageReference Include="System.Management.Automation" Version="7.4.0" ExcludeAssets="ContentFiles" PrivateAssets="All" />
   </ItemGroup>

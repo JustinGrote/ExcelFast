@@ -1,10 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation;
+
 using ClosedXML.Excel;
+
+using static ExcelFast.Constants;
 
 namespace ExcelFast.PowerShell.Cmdlets;
 
-[Cmdlet(VerbsData.Import, "ExcelFastWorkbook")]
+[Cmdlet(VerbsData.Import, MODULE_PREFIX + "Workbook")]
 [OutputType(typeof(XLWorkbook))]
 public class ImportExcelFastWorkbookCommand : PSCmdlet
 {
@@ -18,6 +21,9 @@ public class ImportExcelFastWorkbookCommand : PSCmdlet
 	[ValidateNotNullOrEmpty]
 	[NotNull]
 	public string[]? Path { get; set; }
+
+	// Used in logging
+	string name => MyInvocation.MyCommand.Name;
 
 	protected override void ProcessRecord()
 	{
