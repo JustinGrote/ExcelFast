@@ -1,0 +1,12 @@
+{
+	"configurations": [
+		{
+			"name": "PowerShell: Binary Module Interactive",
+			"type": "PowerShell",
+			"request": "launch",
+			// "script": "Import-Module ./Release/PowerShell.dll -Verbose",
+			"createTemporaryIntegratedConsole": true,
+			"attachDotnetDebugger": true
+		},
+	]
+}

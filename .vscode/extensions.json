@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"ms-vscode.powershell",
+		"pspester.pester-test",
+		"ms-dotnettools.csharp",
+		"github.vscode-pull-request-github",
+		"justin-grote.github-actions-enhanced"
+	]
+}

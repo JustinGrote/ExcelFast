@@ -46,6 +46,9 @@ public class ImportCommand : PSCmdlet
 	//Used to detect if columns have changed during import so we can warn
 	readonly HashSet<ICollection<string>> columnSets = [];
 
+	// PSTypeName to be added to all objects
+	private const string ImportedPSTypeName = "ExcelFast.ImportedWorkbook";
+
 	protected override void ProcessRecord()
 	{
 		foreach (string pathItem in Path)
@@ -143,6 +146,7 @@ public class ImportCommand : PSCmdlet
 				}
 
 				PSObject psObject = new(row.Count);
+				psObject.TypeNames.Insert(0, ImportedPSTypeName);
 
 				foreach (KeyValuePair<string, object> property in row)
 				{
