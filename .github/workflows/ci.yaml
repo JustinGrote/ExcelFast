@@ -30,7 +30,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
     - name: ⚡ Install PowerShell Modules
-      uses: JustinGrote/ModuleFast-action
+      uses: JustinGrote/ModuleFast-action@v0
       with:
         update: true
     - name: 👷 Publish
