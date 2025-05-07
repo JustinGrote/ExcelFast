@@ -7,9 +7,9 @@ using static ExcelFast.Constants;
 
 namespace ExcelFast.PowerShell.Cmdlets;
 
-[Cmdlet(VerbsData.Import, MODULE_PREFIX + "Workbook")]
+[Cmdlet(VerbsCommon.Open, CmdletDefaultName)]
 [OutputType(typeof(XLWorkbook))]
-public class ImportExcelFastWorkbookCommand : PSCmdlet
+public class OpenCommand : PSCmdlet
 {
 	[Parameter(
 			Mandatory = true,

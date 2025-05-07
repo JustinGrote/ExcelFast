@@ -9,7 +9,7 @@ using FilePath = System.IO.Path;
 
 namespace ExcelFast.PowerShell.Cmdlets;
 
-[Cmdlet(VerbsData.Import, MODULE_PREFIX)]
+[Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [OutputType(typeof(IEnumerable<dynamic>))]
 public class ImportCommand : PSCmdlet
 {
@@ -65,10 +65,10 @@ public class ImportCommand : PSCmdlet
 			}
 
 			string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
-			if (!EXCEL_EXTENSION.Contains(fileExtension))
+			if (!AcceptedExtensions.Contains(fileExtension))
 			{
 				WriteError(new ErrorRecord(
-					new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'. Supported file types: {string.Join(',', EXCEL_EXTENSION)}", "Path"),
+					new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'. Supported file types: {string.Join(',', AcceptedExtensions)}", "Path"),
 					"UnsupportedFileType",
 					ErrorCategory.InvalidArgument,
 					providerPath

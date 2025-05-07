@@ -2,6 +2,8 @@ namespace ExcelFast;
 
 internal static class Constants
 {
-	internal const string MODULE_PREFIX = "ExcelFast";
-	internal static readonly string[] EXCEL_EXTENSION = [".xlsx", ".csv"];
+	internal const string CmdletPrefix = "";
+	internal const string CmdletSuffix = "Workbook";
+	internal const string CmdletDefaultName = CmdletPrefix + CmdletSuffix;
+	internal static readonly string[] AcceptedExtensions = [".xlsx", ".csv"];
 }
