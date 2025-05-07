@@ -1,11 +1,22 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
 {
-	"name": "ExcelFast DevContainer",
+	"name": "ExcelFast",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
 	"hostRequirements": {
 		"cpus": 4
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.powershell",
+				"pspester.pester-test",
+				"ms-dotnettools.csharp",
+				"github.vscode-pull-request-github",
+				"justin-grote.github-actions-enhanced"
+			]
+		}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
