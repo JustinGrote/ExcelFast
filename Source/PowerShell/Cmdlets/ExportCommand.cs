@@ -4,6 +4,7 @@ using System.Management.Automation;
 using MiniExcelLibs;
 
 using static ExcelFast.Constants;
+using static System.Management.Automation.PSSerializer;
 
 using FilePath = System.IO.Path;
 
@@ -37,11 +38,18 @@ public class ExportCommand : PSCmdlet
 	[ValidateNotNullOrWhiteSpace]
 	public string SheetName { get; set; } = "Sheet1";
 
+	[Parameter(
+			HelpMessage = "Forces overwriting of the destination file if it already exists."
+	)]
+	public SwitchParameter Force { get; set; }
+
 	// Used in logging
 	private string Name => MyInvocation.MyCommand.Name;
 
-	// Collection to store all input objects before writing to Excel
-	private readonly List<PSObject> inputObjects = [];
+	// Collection to store all input objects organized by sheet
+	private readonly List<List<PSObject>> sheetObjects = [];
+	// Current sheet being processed
+	private List<PSObject> currentSheet = [];
 
 	protected override void ProcessRecord()
 	{
@@ -54,14 +62,54 @@ public class ExportCommand : PSCmdlet
 		{
 			if (inputObject != null)
 			{
-				inputObjects.Add(inputObject);
+				// Check if this is a nested array
+				if (inputObject.BaseObject is Array nestedArray)
+				{
+					// If we already have objects in the current sheet, add it to our sheets collection
+					if (currentSheet.Count > 0)
+					{
+						sheetObjects.Add(currentSheet);
+						currentSheet = [];
+					}
+
+					// Create a new sheet for this array
+					List<PSObject> arraySheet = [];
+					foreach (var item in nestedArray)
+					{
+						if (item is PSObject psObj)
+						{
+							arraySheet.Add(psObj);
+						}
+						else
+						{
+							arraySheet.Add(new PSObject(item));
+						}
+					}
+
+					if (arraySheet.Count > 0)
+					{
+						sheetObjects.Add(arraySheet);
+					}
+				}
+				else
+				{
+					// Regular object, add to current sheet
+					currentSheet.Add(inputObject);
+				}
 			}
 		}
 	}
 
 	protected override void EndProcessing()
 	{
-		if (inputObjects.Count == 0)
+		// Add any remaining objects in currentSheet to sheetObjects
+		if (currentSheet.Count > 0)
+		{
+			sheetObjects.Add(currentSheet);
+		}
+
+		// If no sheets have objects, display warning and return
+		if (sheetObjects.Count == 0 || sheetObjects.All(sheet => sheet.Count == 0))
 		{
 			WriteWarning($"No objects to export.");
 			return;
@@ -69,18 +117,6 @@ public class ExportCommand : PSCmdlet
 
 		string providerPath = GetUnresolvedProviderPathFromPSPath(Destination);
 		WriteDebug($"{Name}: Exporting to Excel file: {providerPath}");
-
-		// Convert PSObjects to a list of dictionaries
-		List<Dictionary<string, object>> dataToExport = [];
-		foreach (PSObject obj in inputObjects)
-		{
-			Dictionary<string, object> row = [];
-			foreach (PSPropertyInfo property in obj.Properties)
-			{
-				row[property.Name] = property.Value ?? string.Empty;
-			}
-			dataToExport.Add(row);
-		}
 
 		try
 		{
@@ -96,21 +132,56 @@ public class ExportCommand : PSCmdlet
 				return;
 			}
 
-			// Create directory if it doesn't exist
 			string? directory = FilePath.GetDirectoryName(providerPath);
+			bool directoryExists = string.IsNullOrEmpty(directory) || Directory.Exists(directory);
+
+			// Check if file or directory needs force
+			if (!Force.IsPresent && (!directoryExists || File.Exists(providerPath)))
+			{
+				WriteError(new ErrorRecord(
+						new IOException($"Path '{providerPath}' already exists or requires directory creation. Use -Force to proceed."),
+						"PathRequiresForce",
+						ErrorCategory.ResourceExists,
+						providerPath
+				));
+				return;
+			}
+
+			// Create directory if it doesn't exist
 			if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
 			{
 				Directory.CreateDirectory(directory);
 			}
 
-			// Save data to Excel file
-			Dictionary<string, object> value = new()
-			{
-				[SheetName] = dataToExport
-			};
+			// Prepare data for all sheets
+			Dictionary<string, object> sheetsData = new();
 
-			MiniExcel.SaveAs(providerPath, value);
-			WriteVerbose($"Successfully exported {dataToExport.Count} objects to '{providerPath}' in sheet '{SheetName}'.");
+			for (int i = 0; i < sheetObjects.Count; i++)
+			{
+				List<PSObject> sheetData = sheetObjects[i];
+				string sheetName = GenerateSheetName(i);
+
+				// Convert PSObjects to a list of dictionaries for this sheet
+				List<Dictionary<string, object>> dataToExport = [];
+				foreach (PSObject obj in sheetData)
+				{
+					// Sanitize the PSObject
+					PSObject cleanObj = new(Deserialize(Serialize(obj)));
+
+					Dictionary<string, object> row = [];
+					foreach (PSPropertyInfo property in cleanObj.Properties)
+					{
+						row[property.Name] = property.Value ?? string.Empty;
+					}
+					dataToExport.Add(row);
+				}
+
+				sheetsData[sheetName] = dataToExport;
+			}
+
+			// Save data to Excel file
+			MiniExcel.SaveAs(providerPath, sheetsData, overwriteFile: Force.IsPresent);
+			WriteVerbose($"Successfully exported data to '{providerPath}' across {sheetsData.Count} sheets.");
 		}
 		catch (Exception ex)
 		{
@@ -121,5 +192,47 @@ public class ExportCommand : PSCmdlet
 					providerPath
 			));
 		}
+	}
+
+	// Helper method to generate sheet names based on the base SheetName
+	private string GenerateSheetName(int index)
+	{
+		if (index == 0)
+		{
+			return SheetName;
+		}
+
+		// Check if the SheetName ends with a number
+		string baseName = SheetName;
+		int startNumber = 1;
+
+		if (int.TryParse(SheetName[^1].ToString(), out int lastDigit))
+		{
+			// Find how many trailing digits the sheet name has
+			int digitCount = 0;
+			for (int i = SheetName.Length - 1; i >= 0; i--)
+			{
+				if (char.IsDigit(SheetName[i]))
+				{
+					digitCount++;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			if (digitCount > 0)
+			{
+				string numberPart = SheetName.Substring(SheetName.Length - digitCount);
+				if (int.TryParse(numberPart, out int number))
+				{
+					baseName = SheetName.Substring(0, SheetName.Length - digitCount);
+					startNumber = number;
+				}
+			}
+		}
+
+		return $"{baseName}{startNumber + index}";
 	}
 }
