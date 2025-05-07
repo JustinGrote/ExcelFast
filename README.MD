@@ -15,6 +15,7 @@ $data = Import-Workbook path/to/excel.xlsx | Select -First 3
 #Open a workbook for editing
 $worksheet = Open-Workbook path/to/excel.xlsx
 $worksheet.<tab> #Note there is full intellisense in vscode and excel
+Save-Workbook $worksheet
 
 #Export data
 $data | Export-Workbook path/to/newexcel.xlsx
