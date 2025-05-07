@@ -1,6 +1,6 @@
 BeforeAll {
 	# Import the module - adjust path as needed for your module structure
-	$ModulePath = (Resolve-Path "$PSScriptRoot\..\..\Release\PowerShell.dll").Path
+	$ModulePath = (Resolve-Path "$PSScriptRoot\..\..\Release\ExcelFast.psd1").Path
 	Import-Module $ModulePath -Force
 
 	# Test file paths
@@ -15,7 +15,7 @@ BeforeAll {
 Describe 'Import-Excel Command Tests' {
 	Context 'When importing a valid Excel file' {
 		It 'Should successfully import data from Test10.xlsx' {
-			$actual = Import-ExcelFast -Path $ValidExcelFile
+			$actual = Import-Workbook -Path $ValidExcelFile
 
 			$actual | Should -Not -BeNullOrEmpty
 			$actual.Count | Should -Be 10
@@ -28,22 +28,22 @@ Describe 'Import-Excel Command Tests' {
 
 	Context 'Path Parameter' {
 		It 'Should Error for a non-existent file path' {
-			{ Import-ExcelFast -Path $InvalidPath -ErrorAction Stop } |
+			{ Import-Workbook -Path $InvalidPath -ErrorAction Stop } |
 				Should -Throw -ExpectedMessage '*Excel file not found*'
 		}
 
 		It 'Should Error for a non-Excel extension' {
-			{ Import-ExcelFast -Path $NonExcelExtension -ErrorAction Stop } |
+			{ Import-Workbook -Path $NonExcelExtension -ErrorAction Stop } |
 				Should -Throw -ExpectedMessage 'Unsupported file type*'
 		}
 
 		It 'Should Error for a non-Excel content' {
-			{ Import-ExcelFast -Path $NonExcelContent -ErrorAction Stop } |
+			{ Import-Workbook -Path $NonExcelContent -ErrorAction Stop } |
 				Should -Throw -ExpectedMessage '* is not a valid Excel file.'
 		}
 
 		It 'Should Error for a non-Excel zip file' {
-			{ Import-ExcelFast -Path $NonExcelZip -ErrorAction Stop } |
+			{ Import-Workbook -Path $NonExcelZip -ErrorAction Stop } |
 				Should -Throw -ExpectedMessage 'Sequence contains no elements*'
 		}
 	}
@@ -51,12 +51,12 @@ Describe 'Import-Excel Command Tests' {
 	Context 'When specifying sheet names' {
 		It "Should throw an error when sheet doesn't exist" {
 
-			{ Import-ExcelFast -Path $ValidExcelFile -SheetName 'NonExistentSheet' -ErrorAction Stop } |
+			{ Import-Workbook -Path $ValidExcelFile -SheetName 'NonExistentSheet' -ErrorAction Stop } |
 				Should -Throw -ExpectedMessage "*Sheet 'NonExistentSheet' does not exist*"
 		}
 
 		It 'Should import data when specifying Sheet1' {
-			$actual = Import-ExcelFast -Path $ValidExcelFile -SheetName 'Sheet1'
+			$actual = Import-Workbook -Path $ValidExcelFile -SheetName 'Sheet1'
 
 			$actual | Should -Not -BeNullOrEmpty
 			$actual.Count | Should -Be 10
@@ -70,7 +70,7 @@ Describe 'Import-Excel Command Tests' {
 	Context 'When importing multiple files' {
 		It 'Should process an array of file paths' {
 			# Use the same file twice for this test
-			$actual = Import-ExcelFast -Path @($ValidExcelFile, $ValidExcelFile)
+			$actual = Import-Workbook -Path @($ValidExcelFile, $ValidExcelFile)
 
 			# Should have twice as many results as we're reading the same file twice
 			$actual | Should -Not -BeNullOrEmpty

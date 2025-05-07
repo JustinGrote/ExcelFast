@@ -5,6 +5,10 @@ on:
   pull_request:
     branches: [ main ]
 
+    defaults:
+      run:
+        shell: pwsh
+
 jobs:
   build:
     name: 👷 Build
@@ -19,13 +23,24 @@ jobs:
       with:
         path: |
           ~/.nuget/packages
+          ~/.local/share/powershell/Modules
           Source/PowerShell/obj
           Source/PowerShell/bin
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
+    - name: ⚡ Install PowerShell Modules
+      uses: JustinGrote/ModuleFast-action
+      with:
+        update: true
     - name: 👷 Publish
       run: dotnet publish --configuration Debug
+    - name: 🧪 Test
+      run: |
+        $config = New-PesterConfiguration
+        $config.run.throw = $true
+        $config.output.Verbosity = 'Detailed'
+        Invoke-Pester -Configuration $config
     - name: 📤 Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
