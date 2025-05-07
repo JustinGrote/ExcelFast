@@ -15,12 +15,13 @@
   </PropertyGroup>
 
   <ItemGroup Label="Dependencies">
-    <ProjectReference Include="..\ExcelFast\ExcelFast.csproj" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Management.Automation" Version="7.4.0" ExcludeAssets="ContentFiles" PrivateAssets="All" />
+		<PackageReference Include="ClosedXML" Version="0.104.2" />
+		<PackageReference Include="MiniExcel" Version="1.41.1" />
   </ItemGroup>
 
   <Target Name="CopyPsd1ToRelease" AfterTargets="Publish">

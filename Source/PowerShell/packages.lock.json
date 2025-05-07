@@ -2,6 +2,25 @@
   "version": 1,
   "dependencies": {
     "net8.0": {
+      "ClosedXML": {
+        "type": "Direct",
+        "requested": "[0.104.2, )",
+        "resolved": "0.104.2",
+        "contentHash": "gOkSjQ152MhpKmw70cBkJV+FnaZAWzDwM36luRf/7FlWYnNeH++9XYdGTd0Y4KQlVPkKVxy948M5MMsnsGC4GQ==",
+        "dependencies": {
+          "ClosedXML.Parser": "[1.2.0, 2.0.0)",
+          "DocumentFormat.OpenXml": "[3.1.1, 4.0.0)",
+          "ExcelNumberFormat": "1.1.0",
+          "RBush": "4.0.0",
+          "SixLabors.Fonts": "1.0.0"
+        }
+      },
+      "MiniExcel": {
+        "type": "Direct",
+        "requested": "[1.41.1, )",
+        "resolved": "1.41.1",
+        "contentHash": "9rrmyIkglutRiGQJhhO9lsJ/VFF7/pQboTupSrjsbkz7aITApp+phInJ6OBkai+ZgNopz6J0RfKA0OXHKmI/dg=="
+      },
       "Roslynator.Analyzers": {
         "type": "Direct",
         "requested": "[4.13.1, )",
@@ -29,18 +48,6 @@
           "System.Security.Cryptography.Pkcs": "8.0.0",
           "System.Security.Permissions": "8.0.0",
           "System.Text.Encoding.CodePages": "8.0.0"
-        }
-      },
-      "ClosedXML": {
-        "type": "Transitive",
-        "resolved": "0.104.2",
-        "contentHash": "gOkSjQ152MhpKmw70cBkJV+FnaZAWzDwM36luRf/7FlWYnNeH++9XYdGTd0Y4KQlVPkKVxy948M5MMsnsGC4GQ==",
-        "dependencies": {
-          "ClosedXML.Parser": "[1.2.0, 2.0.0)",
-          "DocumentFormat.OpenXml": "[3.1.1, 4.0.0)",
-          "ExcelNumberFormat": "1.1.0",
-          "RBush": "4.0.0",
-          "SixLabors.Fonts": "1.0.0"
         }
       },
       "ClosedXML.Parser": {
@@ -118,11 +125,6 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "u8PB9/v02C8mBXzl0vJ7bOyC020zOP+T1mRct+KA46DqZkB40XtsNn9pGD0QowTRsT6R4jPCghn+yAODn2UMMw=="
-      },
-      "MiniExcel": {
-        "type": "Transitive",
-        "resolved": "1.41.1",
-        "contentHash": "9rrmyIkglutRiGQJhhO9lsJ/VFF7/pQboTupSrjsbkz7aITApp+phInJ6OBkai+ZgNopz6J0RfKA0OXHKmI/dg=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -221,13 +223,6 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "Obg3a90MkOw9mYKxrardLpY2u0axDMrSmy4JCdq2cYbelM2cUwmUir5Bomvd1yxmPL9h5LVHU1tuKBZpUjfASg=="
-      },
-      "excelfast": {
-        "type": "Project",
-        "dependencies": {
-          "ClosedXML": "[0.104.2, )",
-          "MiniExcel": "[1.41.1, )"
-        }
       }
     }
   }
