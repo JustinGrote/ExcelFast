@@ -1,5 +1,8 @@
 #This script is called by MSBuild
 param(
+	# The version of the module. Will be generated via gitversion if not specified.
+	[Management.Automation.SemanticVersion]$Version,
+
 	# Path to the completed module. It must have a module manifest with the same name as the module.
 	[ValidateNotNullOrWhiteSpace()]
 	[string]$PublishDir = 'Release',
@@ -30,15 +33,18 @@ try {
 	# Get aliases to export
 	$aliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
 
-	# Get the module verison
-	dotnet tool restore
-	$versionInfo = dotnet gitversion | ConvertFrom-Json
+	if ($null -eq $Version) {
+		# Get the module verison
+		dotnet tool restore
+		$versionInfo = dotnet gitversion | ConvertFrom-Json
 
-	# Update the module version in the manifest
-	$moduleVersion = $versionInfo.MajorMinorPatch
-	$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $versionInfo.ShortSha
-	Write-Host -Fore Cyan "Module Version: $moduleVersion-$modulePrerelease"
+		# Update the module version in the manifest
+		$moduleVersion = $versionInfo.MajorMinorPatch
+		$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $versionInfo.ShortSha
+		$Version = $moduleVersion + '-' + $modulePrerelease
+	}
 
+	Write-Host -Fore Cyan "Module Version: $Version"
 
 	# Update the module manifest
 	Update-ModuleManifest -Path $manifestPath -CmdletsToExport $cmdletsToExport -AliasesToExport $aliasesToExport -ModuleVersion $moduleVersion -Prerelease 'PRERELEASEPLACEHOLDER'

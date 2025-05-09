@@ -1,24 +1,30 @@
 {
 	"version": "2.0.0",
+	"options": {
+		"shell": {
+			"executable": "pwsh",
+			"args": ["-noprofile", "-noninteractive", "-command"]
+		}
+	},
 	"tasks": [
 		{
-			"label": "publish",
+			"label": "build",
 			"type": "shell",
-			"command": "dotnet",
-			"args": [
-				"publish",
-				"--configuration",
-				"Release"
-			],
+			"command": "./build.ps1",
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
 			"presentation": {
-				"reveal": "silent",
-				"panel": "shared"
+				"reveal": "always",
+				"panel": "shared",
+				"clear": true,
+				"showReuseMessage": false
 			},
-			"problemMatcher": "$msCompile"
+			"icon": {
+				"color": "terminal.ansiYellow",
+				"id": "tools"
+			}
 		}
 	]
 }
