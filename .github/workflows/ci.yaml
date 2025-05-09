@@ -34,7 +34,7 @@ jobs:
       with:
         update: true
     - name: 👷 Publish
-      run: dotnet publish --configuration Debug
+      run: ./build.ps1
     - name: 🧪 Test
       run: |
         $config = New-PesterConfiguration

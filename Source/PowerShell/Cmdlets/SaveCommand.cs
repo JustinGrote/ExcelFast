@@ -8,6 +8,7 @@ using static ExcelFast.Constants;
 namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsData.Save, CmdletDefaultName)]
+[Alias("svwb")]
 public class SaveCommand : PSCmdlet
 {
 	[Parameter(

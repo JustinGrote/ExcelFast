@@ -11,6 +11,7 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [OutputType(typeof(IEnumerable<dynamic>))]
+[Alias("imwb")]
 public class ImportCommand : PSCmdlet
 {
 	[Parameter(

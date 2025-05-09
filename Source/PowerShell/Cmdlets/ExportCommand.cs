@@ -11,6 +11,7 @@ using FilePath = System.IO.Path;
 namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsData.Export, CmdletDefaultName)]
+[Alias("exwb")]
 public class ExportCommand : PSCmdlet
 {
 	[Parameter(
@@ -19,7 +20,7 @@ public class ExportCommand : PSCmdlet
 			ValueFromPipelineByPropertyName = true,
 			HelpMessage = "Path to the Excel file to export to."
 	)]
-	[ValidateNotNullOrWhiteSpace]
+	[ValidateNotNullOrEmpty]
 	[NotNull]
 	public string? Destination { get; set; }
 

@@ -33,7 +33,7 @@
 	VariablesToExport = @()
 
 	# Aliases to export from this module
-	AliasesToExport = @()
+	AliasesToExport      = @('*')
 
 	# Private data to pass to the module specified in RootModule/ModuleToProcess
 	PrivateData = @{
@@ -54,7 +54,7 @@
 			ReleaseNotes = 'https://github.com/JustinGrote/ExcelFast/blob/main/CHANGELOG.md'
 
 			# Prerelease string of this module
-			Prerelease = ''
+			Prerelease   = 'Source'
 
 		}
 	}

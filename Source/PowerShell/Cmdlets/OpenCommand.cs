@@ -9,6 +9,7 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsCommon.Open, CmdletDefaultName)]
 [OutputType(typeof(XLWorkbook))]
+[Alias("owb")]
 public class OpenCommand : PSCmdlet
 {
 	[Parameter(

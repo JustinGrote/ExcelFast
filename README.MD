@@ -19,3 +19,13 @@ Save-Workbook $worksheet
 
 #Export data
 $data | Export-Workbook path/to/newexcel.xlsx
+```
+
+## Available Aliases
+
+| Alias | Command |
+|-------|---------|
+| exwb  | Export-Workbook |
+| imwb  | Import-Workbook |
+| owb   | Open-Workbook  |
+| svwb  | Save-Workbook  |

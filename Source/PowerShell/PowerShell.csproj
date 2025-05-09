@@ -24,8 +24,11 @@
 		<PackageReference Include="MiniExcel" Version="1.41.1" />
   </ItemGroup>
 
-  <Target Name="CopyPsd1ToRelease" AfterTargets="Publish">
+  <Target Name="CopyPsdAssets" AfterTargets="Publish">
     <Copy SourceFiles="ExcelFast.psd1" DestinationFolder="$(PublishDir)" />
+    <CreateItem Include="Formats\*.ps1xml">
+      <Output TaskParameter="Include" ItemName="FormatFiles" />
+    </CreateItem>
+    <Copy SourceFiles="@(FormatFiles)" DestinationFolder="$(PublishDir)\Formats" />
   </Target>
-
 </Project>
