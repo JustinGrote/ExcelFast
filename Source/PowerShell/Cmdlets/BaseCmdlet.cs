@@ -70,5 +70,5 @@ public abstract class BaseCmdlet : PSCmdlet
 			object? targetObject = null,
 			ErrorCategory category = ErrorCategory.NotSpecified,
 			bool terminating = false) =>
-					Error(new InvalidOperationException(message), recommendedAction, errorId, targetObject, null, category, terminating);
+					Error(new CmdletInvocationException(message), recommendedAction, errorId, targetObject, null, category, terminating);
 }

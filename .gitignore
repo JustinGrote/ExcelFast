@@ -24,11 +24,13 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+Output/
 x64/
 x86/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
+[Bb]uild/
 bld/
 [Bb]in/
 [Oo]bj/
@@ -63,7 +65,7 @@ BenchmarkDotNet.Artifacts/
 # .NET
 project.lock.json
 project.fragment.lock.json
-artifacts/
+[Aa]rtifacts/
 
 # Tye
 .tye/

@@ -29,3 +29,6 @@ $data | Export-Workbook path/to/newexcel.xlsx
 | imwb  | Import-Workbook |
 | owb   | Open-Workbook  |
 | svwb  | Save-Workbook  |
+
+## Development
+Want to contribute? Check out the [Development Documentation](DEVELOPMENT.MD)

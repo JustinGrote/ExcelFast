@@ -15,7 +15,11 @@
 				"ms-dotnettools.csharp",
 				"github.vscode-pull-request-github",
 				"justin-grote.github-actions-enhanced"
-			]
+			],
+			"settings": {
+				// We are developing a binary module so without this, changes aren't seen.
+				"pester.runTestsInNewProcess": true
+			}
 		}
 	},
 

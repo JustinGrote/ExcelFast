@@ -5,7 +5,7 @@ param(
 
 	# Path to the completed module. It must have a module manifest with the same name as the module.
 	[ValidateNotNullOrWhiteSpace()]
-	[string]$PublishDir = 'Release',
+	[string]$PublishDir = 'Build',
 
 	[string]$ModuleName = 'ExcelFast',
 
