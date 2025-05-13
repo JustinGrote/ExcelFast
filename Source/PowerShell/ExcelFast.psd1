@@ -27,10 +27,18 @@
 	PowerShellVersion = '7.4'
 
 	# Type files (.ps1xml) to be loaded when importing this module
-	TypesToProcess       = @('Formats/XLWorkbook.Types.ps1xml')
+	TypesToProcess       = @(
+		'Formats/XLWorkbook.Types.ps1xml',
+		'Formats/XLWorksheet.Types.ps1xml',
+		'Formats/XLTable.Types.ps1xml'
+	)
 
 	# Format files (.ps1xml) to be loaded when importing this module
-	FormatsToProcess     = @('Formats/XLWorkbook.Format.ps1xml')
+	FormatsToProcess     = @(
+		'Formats/XLWorkbook.Format.ps1xml',
+		'Formats/XLWorksheet.Format.ps1xml',
+		'Formats/XLTable.Format.ps1xml'
+	)
 
 	# Cmdlets to export from this module
 	CmdletsToExport = @('*')
