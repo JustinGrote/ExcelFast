@@ -1,15 +1,10 @@
-using System.Collections.Frozen;
-using System.Diagnostics.CodeAnalysis;
-using System.Management.Automation;
+namespace ExcelFast.PowerShell.Cmdlets;
 
 using MiniExcelLibs;
 
 using static System.Management.Automation.PSSerializer;
-using static ExcelFast.Constants;
 
-using FilePath = System.IO.Path;
-
-namespace ExcelFast.PowerShell.Cmdlets;
+using FilePath = Path;
 
 [Cmdlet(VerbsData.Export, CmdletDefaultName)]
 [Alias("exwb")]
@@ -67,10 +62,9 @@ public class ExportCommand : BaseCmdlet
 		{
 			if (inputObject is null)
 			{
-				WriteDebug($"{Name}: Skipping null input object.");
+				Debug($"Skipping null input object.");
 				continue;
 			}
-
 		}
 	}
 

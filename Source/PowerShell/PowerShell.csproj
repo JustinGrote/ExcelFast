@@ -10,7 +10,7 @@
     <DebugType>portable</DebugType>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <GenerateDependencyFile>false</GenerateDependencyFile>
-    <PublishDir>../../Release</PublishDir>
+    <PublishDir>../../Build</PublishDir>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 

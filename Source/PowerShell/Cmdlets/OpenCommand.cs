@@ -1,11 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Management.Automation;
-
-using ClosedXML.Excel;
-
-using static ExcelFast.Constants;
 
 namespace ExcelFast.PowerShell.Cmdlets;
+
+using ClosedXML.Excel;
 
 [Cmdlet(VerbsCommon.Open, CmdletDefaultName)]
 [OutputType(typeof(XLWorkbook))]

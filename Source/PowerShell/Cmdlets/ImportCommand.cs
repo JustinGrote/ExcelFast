@@ -1,13 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Management.Automation;
+namespace ExcelFast.PowerShell.Cmdlets;
 
 using MiniExcelLibs;
 
-using static ExcelFast.Constants;
-
-using FilePath = System.IO.Path;
-
-namespace ExcelFast.PowerShell.Cmdlets;
+using FilePath = Path;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [OutputType(typeof(PSObject))]
@@ -76,10 +71,11 @@ public class ImportCommand : BaseCmdlet
 			if (!AcceptedExtensions.Contains(fileExtension))
 			{
 				Error(
-					new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
-					$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
-					"UnsupportedFileType",
-					providerPath
+					new ArgumentException(
+						$"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
+						$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
+						"UnsupportedFileType",
+						providerPath
 				);
 				continue;
 			}
@@ -102,24 +98,26 @@ public class ImportCommand : BaseCmdlet
 					continue;
 				}
 
-				ICollection<string> columns = MiniExcel.GetColumns(
-					providerPath,
-					!NoHeaders.IsPresent,
-					SheetName,
-					startCell: StartCell
-				);
-
-				if (!columnSets.Any())
+				try
 				{
-					columnSets.Add(columns);
-				}
-				else if (!columnSets.Any(c => c.SequenceEqual(columns)))
-				{
-					Warning($"Sheet '{SheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
-					columnSets.Add(columns);
-				}
+					ICollection<string> columns = MiniExcel.GetColumns(
+						providerPath,
+						!NoHeaders.IsPresent,
+						SheetName,
+						startCell: StartCell
+					);
 
-				rows = string.IsNullOrEmpty(EndCell)
+					if (!columnSets.Any())
+					{
+						columnSets.Add(columns);
+					}
+					else if (!columnSets.Any(c => c.SequenceEqual(columns)))
+					{
+						Warning($"Sheet '{SheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
+						columnSets.Add(columns);
+					}
+
+					rows = string.IsNullOrEmpty(EndCell)
 					? MiniExcel.Query(
 						providerPath,
 						useHeaderRow: !NoHeaders.IsPresent,
@@ -133,20 +131,61 @@ public class ImportCommand : BaseCmdlet
 						startCell: StartCell,
 						endCell: EndCell
 					);
-
-
-			}
-			catch (NotSupportedException ex)
-			{
-				if (!ex.Message.Contains("Stream cannot know the file type"))
-				{
-					throw;
 				}
+				catch (ArgumentException ex) when (ex.Message.EndsWith("is not a valid Excel file"))
+				{
+					Error(
+						new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
+						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+						"UnknownFileContent",
+						providerPath
+					);
+					continue;
+				}
+				catch (InvalidOperationException ex) when (ex.Message == "Sequence contains no elements")
+				{
+					Error(
+						new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable	(no elements found)."),
+						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+						"UnknownFileContent",
+						providerPath
+					);
+					continue;
+				}
+				catch (NotSupportedException ex)
+				{
+					if (!ex.Message.Contains("Stream cannot know the file type"))
+					{
+						throw;
+					}
+					Error(
+						new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
+							"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+							"UnknownFileContent",
+							providerPath
+						);
+				}
+				catch (Exception ex)
+				{
+					Error(
+						ex,
+						"Something went wrong in the underlying MiniExcel library. Please file an issue in the ExcelFast GitHub repository.",
+						"MiniExcelError",
+						providerPath,
+						errorDetailsMessage: $"Error importing '{providerPath}': MiniExcel Query failed: {ex.Message}"
+					);
+					continue;
+				}
+			}
+			catch (Exception ex)
+			{
 				Error(
-					new ArgumentException($"{providerPath} is not a valid Excel file."),
-					"UnsupportedFileType",
+					ex,
+					"Something unexpected went wrong while importing the Excel file. Please file an issue in the ExcelFast GitHub repository.",
+					"ImportFailed",
 					providerPath
 				);
+				continue;
 			}
 
 			if (Raw.IsPresent)

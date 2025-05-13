@@ -1,5 +1,3 @@
-using System.Management.Automation;
-
 namespace ExcelFast.PowerShell.Cmdlets;
 
 public abstract class BaseCmdlet : PSCmdlet

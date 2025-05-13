@@ -3,20 +3,16 @@ param(
 	# The version of the module. Will be generated via gitversion if not specified.
 	[Management.Automation.SemanticVersion]$Version,
 
-	# Path to the completed module. It must have a module manifest with the same name as the module.
-	[ValidateNotNullOrWhiteSpace()]
-	[string]$PublishDir = 'Build',
-
 	[string]$ModuleName = 'ExcelFast',
 
 	[ValidateNotNullOrWhiteSpace()]
-	[string]$ManifestPath = (Join-Path $PublishDir "$ModuleName.psd1"),
+	[string]$ManifestPath = "Build/$ModuleName.psd1",
 
 	#Specify this for a non-debug release
 	[switch]$Production
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 # Build the module
 try {
