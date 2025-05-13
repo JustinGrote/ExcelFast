@@ -1,19 +1,8 @@
+using namespace System.IO
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Scope='Script')]
 param()
 
-BeforeAll {
-    # Import the module - adjust path as needed for your module structure
-    $ModulePath = (Resolve-Path "$PSScriptRoot\..\..\Release\ExcelFast.psd1").Path
-    Import-Module $ModulePath -Force
-
-    # Test file paths
-    $TestDataPath = Join-Path $PSScriptRoot '..\Fixtures'
-    $ValidExcelFile = Join-Path $TestDataPath 'Test10.xlsx'
-    $NonExcelExtension = Join-Path $TestDataPath 'NotExcel.txt'
-    $NonExcelContent = Join-Path $TestDataPath 'NotExcel.xlsx'
-    $NonExcelZip = Join-Path $TestDataPath 'NotExcelZip.xlsx'
-    $InvalidPath = Join-Path $TestDataPath 'DoesNotExist.xlsx'
-}
+. $PSScriptRoot/../Fixtures/Fixtures.ps1
 
 Describe 'Import-Excel Command Tests' {
     Context 'When importing a valid Excel file' {
@@ -32,29 +21,29 @@ Describe 'Import-Excel Command Tests' {
     Context 'Path Parameter' {
         It 'Should throw FileNotFoundException for a non-existent file path' {
             { Import-Workbook -Path $InvalidPath -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([System.IO.FileNotFoundException]) -ErrorId 'FileNotFound*'
+                Should -Throw -ExceptionType ([FileNotFoundException]) -ErrorId 'FileNotFound,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
 
         It 'Should throw ArgumentException for a non-Excel extension' {
             { Import-Workbook -Path $NonExcelExtension -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([System.ArgumentException]) -ErrorId 'UnsupportedFileType*'
+                Should -Throw -ExceptionType ([ArgumentException]) -ErrorId 'UnsupportedFileType,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
 
-        It 'Should throw ArgumentException for a non-Excel content' {
+        It 'Should throw InvalidDataException for a plaintext file with an xlsx extension' {
             { Import-Workbook -Path $NonExcelContent -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([System.ArgumentException]) -ErrorId 'UnsupportedFileType*'
+                Should -Throw -ExceptionType ([InvalidDataException]) -ErrorId 'UnknownFileContent,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
 
-        It 'Should throw NotSupportedException for a non-Excel zip file' {
+        It 'Should throw InvalidDataException for a xlsx file that is a zip but is not a valid Excel file' {
             { Import-Workbook -Path $NonExcelZip -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([System.NotSupportedException])
+                Should -Throw -ExceptionType ([InvalidDataException]) -ErrorId 'UnknownFileContent,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
     }
 
     Context 'When specifying sheet names' {
         It "Should throw ArgumentException when sheet doesn't exist" {
             { Import-Workbook -Path $ValidExcelFile -SheetName 'NonExistentSheet' -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([System.ArgumentException]) -ErrorId 'InvalidSheetName*'
+                Should -Throw -ExceptionType ([ArgumentException]) -ErrorId 'InvalidSheetName,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
 
         It 'Should import data when specifying Sheet1' {
@@ -71,10 +60,9 @@ Describe 'Import-Excel Command Tests' {
 
     Context 'When importing multiple files' {
         It 'Should process an array of file paths' {
-            # Use the same file twice for this test
+            # Use the same file twice
             $actual = Import-Workbook -Path @($ValidExcelFile, $ValidExcelFile)
 
-            # Should have twice as many results as we're reading the same file twice
             $actual | Should -Not -BeNullOrEmpty
             $actual.Count | Should -Be 20
             $actual[0].Name | Should -Be 'Test1'
@@ -85,6 +73,62 @@ Describe 'Import-Excel Command Tests' {
             $actual[10].Value | Should -Be 'Value1'
             $actual[19].Name | Should -Be 'Test10'
             $actual[19].Value | Should -Be 'Value10'
+        }
+    }
+
+    Context 'Cell Range Parameters' {
+        It 'Should import data from specified start cell' {
+            $actual = Import-Workbook -Path $ValidExcelFile -StartCell 'B2'
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual.Count | Should -BeLessThan 10 # Since we're starting from B2, we should get fewer rows
+        }
+
+        It 'Should import data with specified range when NoHeaders is true' {
+            $actual = Import-Workbook -Path $ValidExcelFile -StartCell 'A1' -EndCell 'B5' -NoHeaders
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual.Count | Should -Be 5 # Get all rows in range
+            $actual[0].A | Should -Not -BeNullOrEmpty
+            $actual[0].B | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Should import data with specified range when headers are used' {
+            $actual = Import-Workbook -Path $ValidExcelFile -StartCell 'A1' -EndCell 'B5'
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual.Count | Should -Be 4 # First row used as headers
+            $actual[0].Name | Should -Not -BeNullOrEmpty
+            $actual[0].Value | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Headers Parameter' {
+        It 'Should use first row as headers by default' {
+            $actual = Import-Workbook -Path $ValidExcelFile
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual[0].PSObject.Properties.Name | Should -Contain 'Name'
+            $actual[0].PSObject.Properties.Name | Should -Contain 'Value'
+        }
+
+        It 'Should use excel column letters when NoHeaders is specified' {
+            $actual = Import-Workbook -Path $ValidExcelFile -NoHeaders
+
+            $actual | Should -Not -BeNullOrEmpty
+            # Column names should be A, B, etc. when NoHeaders is used
+            $actual[0].PSObject.Properties.Name | Should -Contain 'A'
+            $actual[0].PSObject.Properties.Name | Should -Contain 'B'
+        }
+    }
+
+    Context 'Empty Row Handling' {
+				# needs a Test file with empty rows
+        It -Pending -Name 'Should process files with empty rows' {
+            $actual = Import-Workbook -Path $EmptyRowsFile
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual.Count | Should -Be 10
         }
     }
 }
