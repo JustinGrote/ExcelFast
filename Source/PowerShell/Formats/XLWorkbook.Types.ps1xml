@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Types>
+    <Type>
+        <Name>ClosedXML.Excel.XLWorkbook</Name>
+        <Members>
+            <!-- ToString is used because the originalFileName is a private property -->
+            <ScriptProperty>
+                <Name>FileName</Name>
+                <GetScriptBlock>
+                    Split-Path -Leaf ($this.ToString() -replace '^XLWorkbook\((.*)\)$','$1')
+                </GetScriptBlock>
+            </ScriptProperty>
+            <ScriptProperty>
+                <Name>OriginalFilePath</Name>
+                <GetScriptBlock>
+                    $this.ToString() -replace '^XLWorkbook\((.*)\)$','$1'
+                </GetScriptBlock>
+            </ScriptProperty>
+            <ScriptProperty>
+                <Name>Modified</Name>
+                <GetScriptBlock>
+                    $this.Properties.Modified
+                </GetScriptBlock>
+            </ScriptProperty>
+            <ScriptProperty>
+                <Name>ModifiedBy</Name>
+                <GetScriptBlock>
+                    $this.Properties.LastModifiedBy
+                </GetScriptBlock>
+            </ScriptProperty>
+        </Members>
+    </Type>
+</Types>

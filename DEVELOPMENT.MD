@@ -27,3 +27,11 @@ ExcelFast/
 ├── Source/          # Source code
 |-- Test/            # Tests for the module.
 ```
+
+## Architecture
+
+ExcelFast utilizes two separate C# libraries for Excel Manipulation:
+`MiniExcel`: High Performance Low memory library that powers Import/Export Workbook
+`ClosedXML`: Feature-Rich library for editing Excel files that powers Open/Save Workbook
+
+We must keep the separation distinct as their intents are different.
