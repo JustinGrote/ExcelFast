@@ -30,5 +30,7 @@
       <Output TaskParameter="Include" ItemName="FormatFiles" />
     </CreateItem>
     <Copy SourceFiles="@(FormatFiles)" DestinationFolder="$(PublishDir)\Formats" />
+    <Copy SourceFiles="../../README.MD" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="../../THIRD-PARTY-NOTICES.TXT" DestinationFolder="$(PublishDir)" />
   </Target>
 </Project>
