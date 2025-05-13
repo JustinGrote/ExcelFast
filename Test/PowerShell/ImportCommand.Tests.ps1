@@ -10,7 +10,7 @@ Describe 'Import-Excel Command Tests' {
             $actual = Import-Workbook -Path $ValidExcelFile
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 10
+            $actual | Should -HaveCount 10
             $actual[0].Name | Should -Be 'Test1'
             $actual[0].Value | Should -Be 'Value1'
             $actual[-1].Name | Should -Be 'Test10'
@@ -50,7 +50,7 @@ Describe 'Import-Excel Command Tests' {
             $actual = Import-Workbook -Path $ValidExcelFile -SheetName 'Sheet1'
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 10
+            $actual | Should -HaveCount 10
             $actual[0].Name | Should -Be 'Test1'
             $actual[0].Value | Should -Be 'Value1'
             $actual[-1].Name | Should -Be 'Test10'
@@ -64,7 +64,7 @@ Describe 'Import-Excel Command Tests' {
             $actual = Import-Workbook -Path @($ValidExcelFile, $ValidExcelFile)
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 20
+            $actual | Should -HaveCount 20
             $actual[0].Name | Should -Be 'Test1'
             $actual[0].Value | Should -Be 'Value1'
             $actual[-1].Name | Should -Be 'Test10'
@@ -88,7 +88,7 @@ Describe 'Import-Excel Command Tests' {
             $actual = Import-Workbook -Path $ValidExcelFile -StartCell 'A1' -EndCell 'B5' -NoHeaders
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 5 # Get all rows in range
+            $actual | Should -HaveCount 5 # Get all rows in range
             $actual[0].A | Should -Not -BeNullOrEmpty
             $actual[0].B | Should -Not -BeNullOrEmpty
         }
@@ -97,7 +97,7 @@ Describe 'Import-Excel Command Tests' {
             $actual = Import-Workbook -Path $ValidExcelFile -StartCell 'A1' -EndCell 'B5'
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 4 # First row used as headers
+            $actual | Should -HaveCount 4 # First row used as headers
             $actual[0].Name | Should -Not -BeNullOrEmpty
             $actual[0].Value | Should -Not -BeNullOrEmpty
         }
@@ -123,12 +123,21 @@ Describe 'Import-Excel Command Tests' {
     }
 
     Context 'Empty Row Handling' {
-				# needs a Test file with empty rows
-        It -Pending -Name 'Should process files with empty rows' {
-            $actual = Import-Workbook -Path $EmptyRowsFile
-
+	    # needs a Test file with empty rows
+        It -Name 'Should skip empty rows by default' {
+            $actual = Import-Workbook -Path $SkippedRow
             $actual | Should -Not -BeNullOrEmpty
-            $actual.Count | Should -Be 10
+            $actual | Should -HaveCount 2
+            $actual[1].Column1 | Should -Be 'ValueR4C1'
+        }
+        It -Name 'Should not skip empty rows when IncludeEmptyRows is specified' {
+            $actual = Import-Workbook -Path $SkippedRow -IncludeEmptyRows
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 3
+            $actual[0].Column1 | Should -Be 'ValueR2C1'
+            $actual[1].Column1 | Should -BeNullOrEmpty
+            $actual[1].PSObject.Properties | Should -HaveCount 3
+            $actual[2].Column1 | Should -Be 'ValueR4C1'
         }
     }
 }

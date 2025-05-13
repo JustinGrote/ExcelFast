@@ -47,6 +47,11 @@ public class ImportCommand : BaseCmdlet
 	)]
 	private static SwitchParameter Raw { get; set; } = false;
 
+	[Parameter(
+		HelpMessage = "Include empty rows in the output. By default, empty rows are skipped."
+	)]
+	public SwitchParameter IncludeEmptyRows { get; set; } = false;
+
 	readonly HashSet<ICollection<string>> columnSets = [];
 	private const string ImportedPSTypeName = "ExcelFast.ImportedWorkbook";
 
@@ -195,12 +200,14 @@ public class ImportCommand : BaseCmdlet
 				continue;
 			}
 
+			int rowCount = 0;
 			foreach (IDictionary<string, object> row in rows)
 			{
-				// Create PSObject directly from properties to avoid intermediate allocations
-				if (row.Count == 0)
+				rowCount++;
+
+				if (!IncludeEmptyRows && row.Values.All(v => v == null))
 				{
-					Debug($"Row in '{providerPath}' is empty. Skipping.");
+					Debug($"Row {rowCount} in '{providerPath}' sheet '{SheetName}' is empty. Skipping. Specify -IncludeEmptyRows to include null rows.");
 					continue;
 				}
 
