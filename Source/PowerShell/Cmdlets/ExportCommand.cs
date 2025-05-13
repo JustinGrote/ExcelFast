@@ -1,10 +1,11 @@
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation;
 
 using MiniExcelLibs;
 
-using static ExcelFast.Constants;
 using static System.Management.Automation.PSSerializer;
+using static ExcelFast.Constants;
 
 using FilePath = System.IO.Path;
 
@@ -12,7 +13,7 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsData.Export, CmdletDefaultName)]
 [Alias("exwb")]
-public class ExportCommand : PSCmdlet
+public class ExportCommand : BaseCmdlet
 {
 	[Parameter(
 			Mandatory = true,
@@ -52,52 +53,62 @@ public class ExportCommand : PSCmdlet
 	// Current sheet being processed
 	private List<PSObject> currentSheet = [];
 
+	// Used to store the initial detected columns. This is to ensure subsequent columns are not added.
+	private List<string>? columns;
+
 	protected override void ProcessRecord()
 	{
-		if (InputObject == null || InputObject.Length == 0)
+		if (InputObject is null || InputObject.Length == 0)
 		{
 			return;
 		}
 
 		foreach (PSObject inputObject in InputObject)
 		{
-			if (inputObject != null)
+			if (inputObject is null)
 			{
-				// Check if this is a nested array
-				if (inputObject.BaseObject is Array nestedArray)
+				WriteDebug($"{Name}: Skipping null input object.");
+				continue;
+			}
+
+		}
+	}
+
+	private void ConvertToDictionary(PSObject inputObject)
+	{
+		// Check if this is a nested array
+		if (inputObject.BaseObject is Array nestedArray)
+		{
+			// If we already have objects in the current sheet, add it to our sheets collection
+			if (currentSheet.Count > 0)
+			{
+				sheetObjects.Add(currentSheet);
+				currentSheet = [];
+			}
+
+			// Create a new sheet for this array
+			List<PSObject> arraySheet = [];
+			foreach (var item in nestedArray)
+			{
+				if (item is PSObject psObj)
 				{
-					// If we already have objects in the current sheet, add it to our sheets collection
-					if (currentSheet.Count > 0)
-					{
-						sheetObjects.Add(currentSheet);
-						currentSheet = [];
-					}
-
-					// Create a new sheet for this array
-					List<PSObject> arraySheet = [];
-					foreach (var item in nestedArray)
-					{
-						if (item is PSObject psObj)
-						{
-							arraySheet.Add(psObj);
-						}
-						else
-						{
-							arraySheet.Add(new PSObject(item));
-						}
-					}
-
-					if (arraySheet.Count > 0)
-					{
-						sheetObjects.Add(arraySheet);
-					}
+					arraySheet.Add(psObj);
 				}
 				else
 				{
-					// Regular object, add to current sheet
-					currentSheet.Add(inputObject);
+					arraySheet.Add(new PSObject(item));
 				}
 			}
+
+			if (arraySheet.Count > 0)
+			{
+				sheetObjects.Add(arraySheet);
+			}
+		}
+		else
+		{
+			// Regular object, add to current sheet
+			currentSheet.Add(inputObject);
 		}
 	}
 
@@ -112,24 +123,24 @@ public class ExportCommand : PSCmdlet
 		// If no sheets have objects, display warning and return
 		if (sheetObjects.Count == 0 || sheetObjects.All(sheet => sheet.Count == 0))
 		{
-			WriteWarning($"No objects to export.");
+			Warning($"No objects to export.");
 			return;
 		}
 
 		string providerPath = GetUnresolvedProviderPathFromPSPath(Destination);
-		WriteDebug($"{Name}: Exporting to Excel file: {providerPath}");
+		Debug($"Exporting to Excel file: {providerPath}");
 
 		try
 		{
 			string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
 			if (!AcceptedExtensions.Contains(fileExtension))
 			{
-				WriteError(new ErrorRecord(
-						new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'. Supported file types: {string.Join(',', AcceptedExtensions)}", "Path"),
-						"UnsupportedFileType",
-						ErrorCategory.InvalidArgument,
-						providerPath
-				));
+				Error(
+					new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
+					$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
+					"UnsupportedFileType",
+					providerPath
+				);
 				return;
 			}
 
@@ -139,12 +150,12 @@ public class ExportCommand : PSCmdlet
 			// Check if file or directory needs force
 			if (!Force.IsPresent && (!directoryExists || File.Exists(providerPath)))
 			{
-				WriteError(new ErrorRecord(
-						new IOException($"Path '{providerPath}' already exists or requires directory creation. Use -Force to proceed."),
-						"PathRequiresForce",
-						ErrorCategory.ResourceExists,
-						providerPath
-				));
+				Error(
+					new IOException($"Path '{providerPath}' already exists or requires directory creation."),
+					"Use -Force to proceed with the operation.",
+					"PathRequiresForce",
+					providerPath
+				);
 				return;
 			}
 
@@ -182,16 +193,16 @@ public class ExportCommand : PSCmdlet
 
 			// Save data to Excel file
 			MiniExcel.SaveAs(providerPath, sheetsData, overwriteFile: Force.IsPresent);
-			WriteVerbose($"Successfully exported data to '{providerPath}' across {sheetsData.Count} sheets.");
+			Verbose($"Successfully exported data to '{providerPath}' across {sheetsData.Count} sheets.");
 		}
 		catch (Exception ex)
 		{
-			WriteError(new ErrorRecord(
-					ex,
-					"ExportFailed",
-					ErrorCategory.WriteError,
-					providerPath
-			));
+			Error(
+				ex,
+				"Check file permissions and ensure the file is not locked by another process.",
+				"ExportFailed",
+				providerPath
+			);
 		}
 	}
 

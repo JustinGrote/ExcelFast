@@ -9,7 +9,7 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 [Cmdlet(VerbsData.Save, CmdletDefaultName)]
 [Alias("svwb")]
-public class SaveCommand : PSCmdlet
+public class SaveCommand : BaseCmdlet
 {
 	[Parameter(
 					Mandatory = true,
@@ -33,9 +33,6 @@ public class SaveCommand : PSCmdlet
 	)]
 	public SwitchParameter Force { get; set; }
 
-	// Used in logging
-	string name => MyInvocation.MyCommand.Name;
-
 	// List to collect workbooks from pipeline
 	private readonly List<XLWorkbook> _workbooks = [];
 
@@ -52,24 +49,12 @@ public class SaveCommand : PSCmdlet
 		// Validate multiple workbooks with Destination scenario
 		if (_workbooks.Count > 1 && !string.IsNullOrEmpty(Destination))
 		{
-			ErrorRecord error = new(
-					new PSNotSupportedException(
-						"The Destination parameter can only be used when saving a single workbook. " +
-						"When saving multiple workbooks, each must be saved to its current location."),
-						"MultipleWorkbooksWithDestinationParameter",
-					ErrorCategory.InvalidOperation,
-					Destination
+			Error(
+				new PSNotSupportedException("The Destination parameter can only be used when saving a single workbook."),
+				"Use -Destination with a single workbook or use a loop to specify the destination separately.",
+				"MultipleWorkbooksWithDestinationParameter",
+				Destination
 			);
-			error.ErrorDetails.RecommendedAction = "Use -Destination with a single workbook or use a loop to specify the destination separately.";
-
-			WriteError(new ErrorRecord(
-					new PSNotSupportedException(
-						"The Destination parameter can only be used when saving a single workbook. " +
-						"When saving multiple workbooks, each must be saved to its current location."),
-						"MultipleWorkbooksWithDestinationParameter",
-					ErrorCategory.InvalidOperation,
-					Destination
-			));
 			return;
 		}
 
@@ -91,12 +76,12 @@ public class SaveCommand : PSCmdlet
 
 				if (File.Exists(resolvedPath) && !Force.IsPresent)
 				{
-					WriteError(new ErrorRecord(
-							new IOException($"File already exists: {resolvedPath}. Use -Force to overwrite."),
-							"FileAlreadyExists",
-							ErrorCategory.ResourceExists,
-							resolvedPath
-					));
+					Error(
+						new IOException($"File already exists: {resolvedPath}."),
+						"Use -Force to overwrite the existing file.",
+						"FileAlreadyExists",
+						resolvedPath
+					);
 					return;
 				}
 
@@ -106,14 +91,12 @@ public class SaveCommand : PSCmdlet
 				{
 					if (!Force.IsPresent)
 					{
-						ErrorRecord error = new(
-								new DirectoryNotFoundException($"Directory does not exist: {directory}"),
-								"DirectoryNotFound",
-								ErrorCategory.InvalidArgument,
-								directory
+						Error(
+							new DirectoryNotFoundException($"Directory does not exist: {directory}"),
+							"Use -Force to create the directory path.",
+							"DirectoryNotFound",
+							directory
 						);
-						error.ErrorDetails.RecommendedAction = "Use -Force to create the directory path.";
-						WriteError(error);
 						return;
 					}
 
@@ -125,12 +108,12 @@ public class SaveCommand : PSCmdlet
 			}
 			catch (Exception ex)
 			{
-				WriteError(new ErrorRecord(
-						ex,
-						"SaveExcelWorkbookError",
-						ErrorCategory.WriteError,
-						Destination ?? "current location"
-				));
+				Error(
+					ex,
+					"Check file permissions and ensure the file is not locked by another process.",
+					"SaveExcelWorkbookError",
+					Destination ?? "current location"
+				);
 			}
 		}
 	}

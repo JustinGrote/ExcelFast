@@ -10,7 +10,7 @@ namespace ExcelFast.PowerShell.Cmdlets;
 [Cmdlet(VerbsCommon.Open, CmdletDefaultName)]
 [OutputType(typeof(XLWorkbook))]
 [Alias("owb")]
-public class OpenCommand : PSCmdlet
+public class OpenCommand : BaseCmdlet
 {
 	[Parameter(
 			Mandatory = true,
@@ -23,9 +23,6 @@ public class OpenCommand : PSCmdlet
 	[NotNull]
 	public string[]? Path { get; set; }
 
-	// Used in logging
-	string name => MyInvocation.MyCommand.Name;
-
 	protected override void ProcessRecord()
 	{
 		foreach (string pathItem in Path)
@@ -34,12 +31,12 @@ public class OpenCommand : PSCmdlet
 
 			if (!File.Exists(resolvedPath))
 			{
-				WriteError(new ErrorRecord(
-						new FileNotFoundException($"Excel file not found: {resolvedPath}"),
-						"FileNotFound",
-						ErrorCategory.ObjectNotFound,
-						resolvedPath
-				));
+				Error(
+					new FileNotFoundException($"Excel file not found: {resolvedPath}"),
+					"Verify the file path and try again.",
+					"FileNotFound",
+					resolvedPath
+				);
 				continue;
 			}
 
@@ -50,12 +47,12 @@ public class OpenCommand : PSCmdlet
 			}
 			catch (Exception ex)
 			{
-				WriteError(new ErrorRecord(
-						ex,
-						"ImportExcelWorkbookError",
-						ErrorCategory.ReadError,
-						resolvedPath
-				));
+				Error(
+					ex,
+					"Check if the file is a valid Excel file and is not corrupted.",
+					"ImportExcelWorkbookError",
+					resolvedPath
+				);
 			}
 		}
 	}

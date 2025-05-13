@@ -55,7 +55,6 @@
 
 			# Prerelease string of this module
 			Prerelease   = 'Source'
-
 		}
 	}
 }
