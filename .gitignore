@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Pester
+testResults.xml

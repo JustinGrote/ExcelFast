@@ -2,7 +2,7 @@
 
 BeforeAll {
 	# Import the module - adjust path as needed for your module structure
-	$ModulePath = (Resolve-Path "$PSScriptRoot\..\..\Build\ExcelFast.psd1").Path
+	$ModulePath = (Resolve-Path "$PSScriptRoot\..\..\Artifacts\Module\ExcelFast.psd1").Path
 	Import-Module $ModulePath -Force
 
 	# Test file paths

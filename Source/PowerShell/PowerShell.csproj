@@ -10,7 +10,7 @@
     <DebugType>portable</DebugType>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <GenerateDependencyFile>false</GenerateDependencyFile>
-    <PublishDir>../../Build/Module</PublishDir>
+    <PublishDir>$(ArtifactsPath)/Module</PublishDir>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 

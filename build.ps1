@@ -8,7 +8,7 @@ param(
 
 	[string]$ModuleName = 'ExcelFast',
 
-	[string]$PublishPath = "$PSScriptRoot/Build/Module",
+	[string]$PublishPath = "$PSScriptRoot/Artifacts/Module",
 
 	[ValidateNotNullOrWhiteSpace()]
 	[string]$ManifestPath = "$PublishPath/$ModuleName.psd1",
@@ -67,7 +67,6 @@ try {
 			Write-Host -Fore Yellow 'No tag found. Using GitVersion to determine the version.'
 			# Get the module verison
 			dotnet tool restore
-			Write-Host -Fore Magenta "$(dotnet GitVersion)"
 			$versionInfo = dotnet gitversion | ConvertFrom-Json
 
 			# Update the module version in the manifest
@@ -75,7 +74,10 @@ try {
 
 			# If this is running in Github Actions, use the run id and attempt ID as the prereleasenumber
 			if ($env:GITHUB_RUN_NUMBER -and $env:GITHUB_RUN_ATTEMPT) {
-				$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $env:GITHUB_RUN_NUMBER.ToString('D3') + '.' + $env:GITHUB_RUN_ATTEMPT.ToString('D3') + '.' + $versionInfo.ShortSha
+				$runId = ([int]$env:GITHUB_RUN_NUMBER).ToString('D3')
+				$attemptId = ([int]$env:GITHUB_RUN_ATTEMPT).ToString('D3')
+
+				$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $runId + '.' + $attemptId + '.' + $versionInfo.ShortSha
 			} else {
 				# Otherwise, use the short sha as the prereleasenumber
 				$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $versionInfo.ShortSha

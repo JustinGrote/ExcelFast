@@ -19,14 +19,15 @@ jobs:
     steps:
     - name: 🚚 Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Required for GitVersion
     - name: ⚡ Cache NuGet packages
       uses: actions/cache@v4
       with:
         path: |
           ~/.nuget/packages
           ~/.local/share/powershell/Modules
-          Source/PowerShell/obj
-          Source/PowerShell/bin
+          Artifacts
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
@@ -38,37 +39,45 @@ jobs:
       env:
         # "Pin" the module version if the workflow is triggered by a tag
         MODULEVERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || null }}
-      run: ./build.ps1
+      run: |
+        try {./build.ps1}
+        catch {
+          "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
+          throw
+        }
     - name: 🧪 Test
       run: |
         $config = New-PesterConfiguration
         $config.run.throw = $true
         $config.output.Verbosity = 'Detailed'
         $config.TestResult.Enabled = $true
+        $config.TestResult.OutputFormat = 'NUnitXml'
         Invoke-Pester -Configuration $config
-    - name: 📈 Report Test Results
-      uses: dorny/test-reporter@v2
-      with:
-        name: Pester Tests
-        path: test-results.xml
-        reporter: dotnet-nunit
+    # - name: 📈 Report Test Results
+    #   uses: dorny/test-reporter@v2
+    #   with:
+    #     name: Pester Tests
+    #     path: testResults.xml
+    #     reporter: dotnet-nunit
     - name: 📤 Upload Module Zip
       uses: actions/upload-artifact@v4
       with:
         name: ExcelFast
-        path: ./Build/Module
+        path: ./Artifacts/Module
     - name: 📤 Upload Nupkg
       uses: actions/upload-artifact@v4
       with:
         name: ExcelFast-nupkg
-        path: ./Build/*.nupkg
+        path: ./Artifacts/*.nupkg
 
   publish:
     name: 🚢 Publish to PowerShell Gallery
     needs: build
+    environment:
+      name: PowerShell Gallery
+      url: https://www.powershellgallery.com/packages/ExcelFast
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    environment: PowerShell Gallery
     steps:
     - name: 📥 Download Build Artifacts
       uses: actions/download-artifact@v4
