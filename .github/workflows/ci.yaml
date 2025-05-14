@@ -88,4 +88,6 @@ jobs:
       env:
         PSGALLERY_API_KEY: ${{ secrets.PSGALLERY }}
       run: |
-        Publish-PSResource -Path ./Release -ApiKey $env:PSGALLERY_API_KEY
+        $DebugPreference = 'Continue'
+        $VerbosePreference = 'Continue'
+        Publish-PSResource -Path ./Release -ApiKey $env:PSGALLERY_API_KEY -Verbose -Debug

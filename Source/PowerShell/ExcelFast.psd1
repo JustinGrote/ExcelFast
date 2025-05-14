@@ -62,7 +62,7 @@
 			ProjectUri = 'https://github.com/JustinGrote/ExcelFast'
 
 			# A URL to an icon representing this module
-			IconUri = 'https://raw.githubusercontent.com/JustinGrote/ExcelFast/main/Source/Media/icon.png'
+			IconUri      = 'https://raw.githubusercontent.com/JustinGrote/ExcelFast/main/images/logo.gif'
 
 			# ReleaseNotes of this module
 			ReleaseNotes = 'https://github.com/JustinGrote/ExcelFast/blob/main/CHANGELOG.md'
