@@ -8,11 +8,18 @@ param(
 
 	[string]$ModuleName = 'ExcelFast',
 
+	[string]$PublishPath = "$PSScriptRoot/Build/Module",
+
 	[ValidateNotNullOrWhiteSpace()]
-	[string]$ManifestPath = "Build/$ModuleName.psd1",
+	[string]$ManifestPath = "$PublishPath/$ModuleName.psd1",
 
 	#Specify this for a non-debug release
-	[switch]$Production
+	[switch]$Production,
+
+	#Dont create a .nupkg
+	[switch]$NoPackage,
+
+	[string]$PackagePath = (Split-Path $PublishPath -Parent)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,6 +88,7 @@ try {
 	$manifestContent = Get-Content -Path $manifestPath -Raw
 	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
 	Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
+	Write-Host "Module manifest '$manifestPath' updated with cmdlets and aliases."
 
 	# Generate PlatyPS Markdown files
 	$newMarkdownCommandHelpSplat = @{
@@ -93,7 +101,24 @@ try {
 
 	# Clean up by removing the imported module
 	Remove-Module -Name $ModuleName -Force
-	Write-Host "Module manifest '$manifestPath' updated with cmdlets and aliases."
+
+	# Create a nupkg with a dumb workaround
+	if (-not $NoPackage) {
+		try {
+			try {
+				Remove-Item $PackagePath/*.nupkg -ErrorAction Stop
+			} catch {
+				if ($_ -notmatch 'it does not exist') { throw }
+			}
+			Register-PSResourceRepository -Name 'PublishLocal' -Uri $PackagePath -Force
+			Publish-PSResource -Path $PublishPath -Repository 'PublishLocal'
+		} finally {
+			Unregister-PSResourceRepository -Name 'PublishLocal'
+		}
+	}
+	Write-Host "Module nupkg published to $PackagePath"
+
+
 } finally {
 	# Return to the original location
 	Pop-Location

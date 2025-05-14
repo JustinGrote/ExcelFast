@@ -34,7 +34,7 @@ jobs:
       uses: JustinGrote/ModuleFast-action@v0.0.1
       with:
         update: true
-    - name: 👷 Publish
+    - name: 👷 Build
       env:
         # "Pin" the module version if the workflow is triggered by a tag
         MODULEVERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || null }}
@@ -44,15 +44,27 @@ jobs:
         $config = New-PesterConfiguration
         $config.run.throw = $true
         $config.output.Verbosity = 'Detailed'
+        $config.TestResult.Enabled = $true
         Invoke-Pester -Configuration $config
-    - name: 📤 Upload Artifacts
+    - name: 📈 Report Test Results
+      uses: dorny/test-reporter@v2
+      with:
+        name: Pester Tests
+        path: test-results.xml
+        reporter: dotnet-nunit
+    - name: 📤 Upload Module Zip
       uses: actions/upload-artifact@v4
       with:
         name: ExcelFast
-        path: ./Build
+        path: ./Build/Module
+    - name: 📤 Upload Nupkg
+      uses: actions/upload-artifact@v4
+      with:
+        name: ExcelFast-nupkg
+        path: ./Build/*.nupkg
 
   publish:
-    name: 📦 Publish to PowerShell Gallery
+    name: 🚢 Publish to PowerShell Gallery
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -63,7 +75,7 @@ jobs:
       with:
         name: ExcelFast
         path: ./Release
-    - name: 📦 Publish to PowerShell Gallery
+    - name: 🚢 Publish to PowerShell Gallery
       env:
         PSGALLERY_API_KEY: ${{ secrets.PSGALLERY }}
       run: |
