@@ -4,7 +4,7 @@ using namespace System.Management.Automation
 #This script is called by MSBuild
 param(
 	# The version of the module. Will be generated via gitversion if not specified.
-	[Management.Automation.SemanticVersion]$Version = $ENV:MODULEVERSION,
+	[Management.Automation.SemanticVersion]$Version,
 
 	[string]$ModuleName = 'ExcelFast',
 
@@ -21,6 +21,11 @@ param(
 
 	[string]$PackagePath = (Split-Path $PublishPath -Parent)
 )
+
+# This gets awkward in the context of the cast parameter so we do it here.
+if (-not $Version -and $ENV:MODULE_VERSION) {
+	$Version = $ENV:MODULE_VERSION
+}
 
 $ErrorActionPreference = 'Stop'
 
