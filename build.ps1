@@ -43,11 +43,11 @@ try {
 	Write-Host -Fore Cyan "Module Version: $Version"
 
 	# Update the module manifest
-	Update-ModuleManifest -Path $manifestPath -CmdletsToExport $cmdletsToExport -AliasesToExport $aliasesToExport -ModuleVersion $moduleVersion -Prerelease 'PRERELEASEPLACEHOLDER'
+	Update-ModuleManifest -Path $manifestPath -CmdletsToExport $cmdletsToExport -AliasesToExport $aliasesToExport -ModuleVersion ([version]$Version) -Prerelease 'PRERELEASEPLACEHOLDER'
 
 	#BUG: Update-ModuleManifest does not support build characters in the version string, hence this workaround.
 	$manifestContent = Get-Content -Path $manifestPath -Raw
-	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $modulePrerelease
+	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
 	Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
 
 	# Clean up by removing the imported module
