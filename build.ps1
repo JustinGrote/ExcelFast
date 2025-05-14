@@ -67,6 +67,7 @@ try {
 			Write-Host -Fore Yellow 'No tag found. Using GitVersion to determine the version.'
 			# Get the module verison
 			dotnet tool restore
+			Write-Host -Fore Magenta "$(dotnet GitVersion)"
 			$versionInfo = dotnet gitversion | ConvertFrom-Json
 
 			# Update the module version in the manifest
