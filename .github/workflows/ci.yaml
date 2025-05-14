@@ -2,6 +2,8 @@ name: ♻️ ExcelFast CI
 
 on:
   push:
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
 
@@ -34,6 +36,9 @@ jobs:
       with:
         update: true
     - name: 👷 Publish
+      env:
+        # "Pin" the module version if the workflow is triggered by a tag
+        MODULEVERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || null }}
       run: ./build.ps1
     - name: 🧪 Test
       run: |

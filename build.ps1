@@ -2,7 +2,7 @@
 #This script is called by MSBuild
 param(
 	# The version of the module. Will be generated via gitversion if not specified.
-	[Management.Automation.SemanticVersion]$Version,
+	[Management.Automation.SemanticVersion]$Version = $ENV:MODULEVERSION,
 
 	[string]$ModuleName = 'ExcelFast',
 
@@ -30,7 +30,7 @@ try {
 	# Get aliases to export
 	$aliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
 
-	if ($null -eq $Version) {
+	if (-not $Version) {
 		# Get the module verison
 		dotnet tool restore
 		$versionInfo = dotnet gitversion | ConvertFrom-Json
