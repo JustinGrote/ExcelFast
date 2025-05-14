@@ -1,3 +1,4 @@
+#requires -Modules @{ModuleName='Microsoft.PowerShell.Platyps'; ModuleVersion='1.0.0'}
 #This script is called by MSBuild
 param(
 	# The version of the module. Will be generated via gitversion if not specified.
@@ -49,6 +50,15 @@ try {
 	$manifestContent = Get-Content -Path $manifestPath -Raw
 	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
 	Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
+
+	# Generate PlatyPS Markdown files
+	$newMarkdownCommandHelpSplat = @{
+		ModuleInfo     = (Import-Module $manifestPath -Force -PassThru)
+		OutputFolder   = "$PSScriptRoot/Docs/Commands"
+		HelpVersion    = ([version]$Version)
+		WithModulePage = $true
+	}
+	$helpResult = New-MarkdownCommandHelp @newMarkdownCommandHelpSplat
 
 	# Clean up by removing the imported module
 	Remove-Module -Name $ModuleName -Force

@@ -1,4 +1,4 @@
 [
-	"PlatyPS!>2.0.0-0",
+	"Microsoft.PowerShell.PlatyPS!>=1.0.0-0",
 	"Pester<6"
 ]
