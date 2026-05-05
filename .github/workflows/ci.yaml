@@ -69,6 +69,7 @@ jobs:
       with:
         name: ExcelFast-nupkg
         path: ./Artifacts/*.nupkg
+        archive: false #Get nupkg directly
 
   publish:
     name: 🚢 Publish to PowerShell Gallery
