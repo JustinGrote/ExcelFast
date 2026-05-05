@@ -57,6 +57,11 @@ public class ImportCommand : BaseCmdlet
 
 	protected override void ProcessRecord()
 	{
+		if (Path is null || Path.Length == 0)
+		{
+			return;
+		}
+
 		foreach (string pathItem in Path)
 		{
 			string providerPath = GetUnresolvedProviderPathFromPSPath(pathItem);
@@ -151,6 +156,16 @@ public class ImportCommand : BaseCmdlet
 				{
 					Error(
 						new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable	(no elements found)."),
+						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+						"UnknownFileContent",
+						providerPath
+					);
+					continue;
+				}
+				catch (InvalidDataException ex) when (ex.Message.StartsWith("The file type could not be inferred automatically"))
+				{
+					Error(
+						new InvalidDataException(ex.Message),
 						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
 						"UnknownFileContent",
 						providerPath

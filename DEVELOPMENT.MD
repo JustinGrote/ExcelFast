@@ -22,8 +22,7 @@ ExcelFast uses a non-traditional C# project structure that [centralizes build ar
 
 ```
 ExcelFast/
-├── Artifacts/       # Centralized Build Artifacts
-├── Build/           # Build Output of the resultant Module
+├── Artifacts/       # Centralized Build Artifacts, including intermediate .net DLLs, the Published Module, and Nupkg
 ├── Source/          # Source code
 |-- Test/            # Tests for the module.
 ```

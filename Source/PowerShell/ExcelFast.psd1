@@ -1,6 +1,6 @@
 @{
 	# Script module or binary module file associated with this manifest.
-	RootModule = 'PowerShell.dll'
+	RootModule           = 'ExcelFast.dll'
 
 	# Version number of this module.
 	ModuleVersion = '0.0.0'
@@ -24,7 +24,7 @@
 	Description = 'High-performance Excel operations for PowerShell'
 
 	# Minimum version of the PowerShell engine required by this module
-	PowerShellVersion = '7.4'
+	PowerShellVersion    = '5.1'
 
 	# Type files (.ps1xml) to be loaded when importing this module
 	TypesToProcess       = @(
@@ -62,7 +62,7 @@
 			ProjectUri = 'https://github.com/JustinGrote/ExcelFast'
 
 			# A URL to an icon representing this module
-			IconUri = 'https://raw.githubusercontent.com/JustinGrote/ExcelFast/main/Source/Media/icon.png'
+			IconUri      = 'https://raw.githubusercontent.com/JustinGrote/ExcelFast/main/images/logo.gif'
 
 			# ReleaseNotes of this module
 			ReleaseNotes = 'https://github.com/JustinGrote/ExcelFast/blob/main/CHANGELOG.md'

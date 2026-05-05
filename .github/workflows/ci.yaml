@@ -2,8 +2,11 @@ name: ♻️ ExcelFast CI
 
 on:
   push:
+    branches: '*'
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
   pull_request:
-    branches: [ main ]
+    branches: [ main, ci ]
 
 defaults:
   run:
@@ -12,20 +15,19 @@ defaults:
 jobs:
   build:
     name: 👷 Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: 🚚 Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
-        fetch-depth: 0
+        fetch-depth: 0 # Required for GitVersion
     - name: ⚡ Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.nuget/packages
           ~/.local/share/powershell/Modules
-          Source/PowerShell/obj
-          Source/PowerShell/bin
+          Artifacts
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
@@ -33,16 +35,60 @@ jobs:
       uses: JustinGrote/ModuleFast-action@v0.0.1
       with:
         update: true
-    - name: 👷 Publish
-      run: ./build.ps1
+    - name: 👷 Build
+      env:
+        # "Pin" the module version if the workflow is triggered by a tag
+        MODULEVERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || null }}
+      run: |
+        try {./build.ps1}
+        catch {
+          "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
+          throw
+        }
     - name: 🧪 Test
       run: |
         $config = New-PesterConfiguration
         $config.run.throw = $true
         $config.output.Verbosity = 'Detailed'
+        $config.TestResult.Enabled = $true
+        $config.TestResult.OutputFormat = 'NUnitXml'
         Invoke-Pester -Configuration $config
-    - name: 📤 Upload Artifacts
-      uses: actions/upload-artifact@v4
+    # - name: 📈 Report Test Results
+    #   uses: dorny/test-reporter@v2
+    #   with:
+    #     name: Pester Tests
+    #     path: testResults.xml
+    #     reporter: dotnet-nunit
+    - name: 📤 Upload Module Zip
+      uses: actions/upload-artifact@v7
       with:
         name: ExcelFast
-        path: ./Build
+        path: ./Artifacts/Module
+    - name: 📤 Upload Nupkg
+      uses: actions/upload-artifact@v7
+      with:
+        name: ExcelFast-nupkg
+        path: ./Artifacts/*.nupkg
+        archive: false #Get nupkg directly
+
+  publish:
+    name: 🚢 Publish to PowerShell Gallery
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    environment:
+      name: PowerShell Gallery
+      url: https://www.powershellgallery.com/packages/ExcelFast
+    runs-on: ubuntu-latest
+    steps:
+    - name: 📥 Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: ExcelFast
+        path: ./Release
+    - name: 🚢 Publish to PowerShell Gallery
+      env:
+        PSGALLERY_API_KEY: ${{ secrets.PSGALLERY }}
+      run: |
+        $DebugPreference = 'Continue'
+        $VerbosePreference = 'Continue'
+        Publish-PSResource -Path ./Release -ApiKey $env:PSGALLERY_API_KEY

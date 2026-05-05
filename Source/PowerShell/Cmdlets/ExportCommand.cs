@@ -27,12 +27,13 @@ public class ExportCommand : BaseCmdlet
 			HelpMessage = "Objects to export to the Excel file."
 	)]
 	[ValidateNotNull]
+	[NotNull]
 	public PSObject[]? InputObject { get; set; }
 
 	[Parameter(
 			HelpMessage = "Name of the sheet to export to. If not specified, exports to 'Sheet1'."
 	)]
-	[ValidateNotNullOrWhiteSpace]
+	[ValidateNotNullOrEmpty]
 	public string SheetName { get; set; } = "Sheet1";
 
 	[Parameter(
@@ -53,11 +54,6 @@ public class ExportCommand : BaseCmdlet
 
 	protected override void ProcessRecord()
 	{
-		if (InputObject is null || InputObject.Length == 0)
-		{
-			return;
-		}
-
 		foreach (PSObject inputObject in InputObject)
 		{
 			if (inputObject is null)
@@ -212,7 +208,8 @@ public class ExportCommand : BaseCmdlet
 		string baseName = SheetName;
 		int startNumber = 1;
 
-		if (int.TryParse(SheetName[^1].ToString(), out int lastDigit))
+		char lastCharacter = SheetName[SheetName.Length - 1];
+		if (int.TryParse(lastCharacter.ToString(), out int lastDigit))
 		{
 			// Find how many trailing digits the sheet name has
 			int digitCount = 0;
