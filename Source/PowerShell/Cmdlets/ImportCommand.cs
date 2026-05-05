@@ -162,6 +162,16 @@ public class ImportCommand : BaseCmdlet
 					);
 					continue;
 				}
+				catch (InvalidDataException ex) when (ex.Message.StartsWith("The file type could not be inferred automatically"))
+				{
+					Error(
+						new InvalidDataException(ex.Message),
+						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+						"UnknownFileContent",
+						providerPath
+					);
+					continue;
+				}
 				catch (NotSupportedException ex)
 				{
 					if (!ex.Message.Contains("Stream cannot know the file type"))
