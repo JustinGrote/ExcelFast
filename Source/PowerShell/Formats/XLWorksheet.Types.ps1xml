@@ -24,25 +24,29 @@
             <ScriptProperty>
                 <Name>FirstRowUsed</Name>
                 <GetScriptBlock>
-                    $this.FirstRowUsed()?.RowNumber()
+                    $firstRow = $this.FirstRowUsed()
+                    if ($null -ne $firstRow) { $firstRow.RowNumber() }
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>LastRowUsed</Name>
                 <GetScriptBlock>
-                    $this.LastRowUsed()?.RowNumber()
+                    $lastRow = $this.LastRowUsed()
+                    if ($null -ne $lastRow) { $lastRow.RowNumber() }
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>FirstColumnUsed</Name>
                 <GetScriptBlock>
-                    $this.FirstColumnUsed()?.ColumnNumber()
+                    $firstColumn = $this.FirstColumnUsed()
+                    if ($null -ne $firstColumn) { $firstColumn.ColumnNumber() }
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>LastColumnUsed</Name>
                 <GetScriptBlock>
-                    $this.LastColumnUsed()?.ColumnNumber()
+                    $lastColumn = $this.LastColumnUsed()
+                    if ($null -ne $lastColumn) { $lastColumn.ColumnNumber() }
                 </GetScriptBlock>
             </ScriptProperty>
         </Members>

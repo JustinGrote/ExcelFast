@@ -21,6 +21,11 @@ public class OpenCommand : BaseCmdlet
 
 	protected override void ProcessRecord()
 	{
+		if (Path is null || Path.Length == 0)
+		{
+			return;
+		}
+
 		foreach (string pathItem in Path)
 		{
 			string resolvedPath = GetUnresolvedProviderPathFromPSPath(pathItem);

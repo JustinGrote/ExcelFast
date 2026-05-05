@@ -18,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0 # Required for GitVersion
     - name: ⚡ Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.nuget/packages
@@ -60,23 +60,23 @@ jobs:
     #     path: testResults.xml
     #     reporter: dotnet-nunit
     - name: 📤 Upload Module Zip
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ExcelFast
         path: ./Artifacts/Module
     - name: 📤 Upload Nupkg
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ExcelFast-nupkg
         path: ./Artifacts/*.nupkg
 
   publish:
     name: 🚢 Publish to PowerShell Gallery
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     environment:
       name: PowerShell Gallery
       url: https://www.powershellgallery.com/packages/ExcelFast
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
     - name: 📥 Download Build Artifacts

@@ -1,6 +1,6 @@
 @{
 	# Script module or binary module file associated with this manifest.
-	RootModule = 'PowerShell.dll'
+	RootModule           = 'ExcelFast.dll'
 
 	# Version number of this module.
 	ModuleVersion = '0.0.0'
@@ -24,7 +24,7 @@
 	Description = 'High-performance Excel operations for PowerShell'
 
 	# Minimum version of the PowerShell engine required by this module
-	PowerShellVersion = '7.4'
+	PowerShellVersion    = '5.1'
 
 	# Type files (.ps1xml) to be loaded when importing this module
 	TypesToProcess       = @(

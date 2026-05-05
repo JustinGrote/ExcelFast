@@ -126,7 +126,6 @@ try {
 	}
 	Write-Host "Module nupkg published to $PackagePath"
 
-
 } finally {
 	# Return to the original location
 	Pop-Location
