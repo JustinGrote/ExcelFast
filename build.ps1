@@ -110,7 +110,8 @@ try {
 	# Clean up by removing the imported module
 	Remove-Module -Name $ModuleName -Force
 
-	Publish-PSResource -Path $PublishPath -DestinationPath $PackagePath
+	#Package the nuget
+	Compress-PSResource -Path $PublishPath -DestinationPath $PackagePath
 
 	Write-Host "Module nupkg published to $PackagePath"
 
