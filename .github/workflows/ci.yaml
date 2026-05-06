@@ -28,6 +28,7 @@ jobs:
           ~/.nuget/packages
           ~/.local/share/powershell/Modules
           Artifacts
+          !Artifacts/Module
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
