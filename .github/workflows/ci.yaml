@@ -84,7 +84,7 @@ jobs:
     - name: 📥 Download Build Artifacts
       uses: actions/download-artifact@v8
       with:
-        name: ExcelFast-nupkg
+        name: ExcelFast*.nupkg
         path: ./Release
     - name: 🚢 Publish to PowerShell Gallery
       env:
