@@ -37,9 +37,9 @@ public class ImportCommand : BaseCmdlet
 
 	[Parameter(
 		Position = 1,
-		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
+		HelpMessage = "Names of sheet(s) to import. If not specified, imports the first sheet."
 	)]
-	public string? SheetName { get; set; }
+	public string[]? SheetName { get; set; }
 
 	[Parameter(
 		HelpMessage = "Do not use the first row as column headers."
@@ -100,7 +100,8 @@ public class ImportCommand : BaseCmdlet
 
 		if (!File.Exists(providerPath))
 		{
-			Error(new FileNotFoundException($"Excel file not found: {providerPath}"),
+			Error(
+				new FileNotFoundException($"Excel file not found: {providerPath}"),
 				"Check the file path and try again.",
 				"FileNotFound",
 				providerPath
@@ -121,108 +122,86 @@ public class ImportCommand : BaseCmdlet
 			return;
 		}
 
-		IEnumerable<dynamic> rows = [];
+		IEnumerable<string> sheetNamesToImport = [];
 		try
 		{
-			if (string.IsNullOrWhiteSpace(SheetName))
+			IReadOnlyCollection<string> availableSheetNames = MiniExcel.GetSheetNames(providerPath).ToArray();
+			if (SheetName == null || SheetName.Length == 0)
 			{
 				Debug($"No sheet name provided. Importing the first sheet from '{providerPath}'.");
+				sheetNamesToImport = [availableSheetNames.FirstOrDefault()];
 			}
-			else if (!MiniExcel.GetSheetNames(providerPath).Contains(SheetName, StringComparer.OrdinalIgnoreCase))
+			else
 			{
-				Error(
-					new ArgumentException($"Sheet '{SheetName}' does not exist in the '{providerPath}' workbook."),
-					"Check the sheet name and try again.",
-					"InvalidSheetName",
-					SheetName
-				);
-				return;
-			}
+				IReadOnlyCollection<string> missingSheetNames =
+				[
+					.. SheetName.Where(sheetName => !availableSheetNames.Contains(sheetName, StringComparer.OrdinalIgnoreCase))
+				];
 
-			try
-			{
-				ICollection<string> columns = MiniExcel.GetColumns(
-					providerPath,
-					!NoHeaders.IsPresent,
-					SheetName,
-					startCell: StartCell
-				);
-
-				if (!columnSets.Any())
+				if (missingSheetNames.Count > 0)
 				{
-					columnSets.Add(columns);
-				}
-				else if (!columnSets.Any(c => c.SequenceEqual(columns)))
-				{
-					Warning($"Sheet '{SheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
-					columnSets.Add(columns);
-				}
-
-				rows = string.IsNullOrEmpty(EndCell)
-				? MiniExcel.Query(
-					providerPath,
-					useHeaderRow: !NoHeaders.IsPresent,
-					sheetName: SheetName,
-					startCell: StartCell
-				)
-				: MiniExcel.QueryRange(
-					providerPath,
-					!NoHeaders.IsPresent,
-					SheetName,
-					startCell: StartCell,
-					endCell: EndCell
-				);
-			}
-			catch (ArgumentException ex) when (ex.Message.EndsWith("is not a valid Excel file"))
-			{
-				Error(
-					new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
-					"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
-					"UnknownFileContent",
-					providerPath
-				);
-				return;
-			}
-			catch (InvalidOperationException ex) when (ex.Message == "Sequence contains no elements")
-			{
-				Error(
-					new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable	(no elements found)."),
-					"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
-					"UnknownFileContent",
-					providerPath
-				);
-				return;
-			}
-			catch (InvalidDataException ex) when (ex.Message.StartsWith("The file type could not be inferred automatically"))
-			{
-				Error(
-					new InvalidDataException(ex.Message),
-					"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
-					"UnknownFileContent",
-					providerPath
-				);
-				return;
-			}
-			catch (NotSupportedException ex) when (ex.Message.Contains("Stream cannot know the file type"))
-			{
-				Error(
-					new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
-						"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
-						"UnknownFileContent",
-						providerPath
+					string missingSheets = string.Join(", ", missingSheetNames);
+					Error(
+						new ArgumentException($"Sheet(s) '{missingSheets}' do not exist in the '{providerPath}' workbook."),
+						"Check the sheet name and try again.",
+						"InvalidSheetName",
+						string.Join(",", SheetName)
 					);
+					return;
+				}
+
+				sheetNamesToImport = SheetName;
 			}
-			catch (Exception ex)
+
+			foreach (string currentSheetName in sheetNamesToImport)
 			{
-				Error(
-					ex,
-					"Something went wrong in the underlying MiniExcel library. Please file an issue in the ExcelFast GitHub repository.",
-					"MiniExcelError",
-					providerPath,
-					errorDetailsMessage: $"Error importing '{providerPath}': MiniExcel Query failed: {ex.Message}"
-				);
-				return;
+				ImportSheetData(providerPath, currentSheetName);
 			}
+		}
+		catch (ArgumentException ex) when (ex.Message.EndsWith("is not a valid Excel file"))
+		{
+			Error(
+				new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
+				"The file does not appear to be an Excel file type. Check the extension and content of the file. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+				"UnsupportedFileType",
+				providerPath
+			);
+		}
+		catch (InvalidDataException ex) when (ex.Message == "End of Central Directory record could not be found.")
+		{
+			Error(
+				new InvalidDataException($"{providerPath} appears to be a supported Excel file extension but is incomplete or corrupted."),
+				"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+				"CorruptedZipContent",
+				providerPath
+			);
+		}
+		catch (InvalidOperationException ex) when (ex.Message == "Sequence contains no matching element")
+		{
+			Error(
+				new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable	(no elements found)."),
+				"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+				"UnknownFileContent",
+				providerPath
+			);
+		}
+		catch (InvalidDataException ex) when (ex.Message.StartsWith("The file type could not be inferred automatically"))
+		{
+			Error(
+				new InvalidDataException(ex.Message),
+				"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+				"UnknownFileContent",
+				providerPath
+			);
+		}
+		catch (NotSupportedException ex) when (ex.Message.Contains("Stream cannot know the file type"))
+		{
+			Error(
+				new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
+				"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
+				"UnknownFileContent",
+				providerPath
+			);
 		}
 		catch (Exception ex)
 		{
@@ -230,10 +209,44 @@ public class ImportCommand : BaseCmdlet
 				ex,
 				"Something unexpected went wrong while importing the Excel file. Please file an issue in the ExcelFast GitHub repository.",
 				"ImportFailed",
-				providerPath
+				providerPath,
+				terminating: true
 			);
-			return;
 		}
+	}
+
+	private void ImportSheetData(string providerPath, string currentSheetName)
+	{
+		IEnumerable<dynamic> rows;
+
+		ICollection<string> columns = MiniExcel.GetColumns(
+			providerPath,
+			!NoHeaders.IsPresent,
+			currentSheetName,
+			startCell: StartCell
+		);
+
+		bool duplicateColumnSet = !columnSets.Add(columns);
+
+		if (duplicateColumnSet || !columnSets.Any(c => c.SequenceEqual(columns)))
+		{
+			Warning($"Sheet '{currentSheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
+		}
+
+		rows = string.IsNullOrEmpty(EndCell)
+		? MiniExcel.Query(
+			providerPath,
+			useHeaderRow: !NoHeaders.IsPresent,
+			sheetName: currentSheetName,
+			startCell: StartCell
+		)
+		: MiniExcel.QueryRange(
+			providerPath,
+			!NoHeaders.IsPresent,
+			currentSheetName,
+			startCell: StartCell,
+			endCell: EndCell
+		);
 
 		if (Raw.IsPresent)
 		{
@@ -249,7 +262,8 @@ public class ImportCommand : BaseCmdlet
 
 			if (!IncludeEmptyRows && row.Values.All(v => v == null))
 			{
-				Debug($"Row {rowCount} in '{providerPath}' sheet '{SheetName}' is empty. Skipping. Specify -IncludeEmptyRows to include null rows.");
+				string sheetDisplayName = currentSheetName ?? "<first sheet>";
+				Debug($"Row {rowCount} in '{providerPath}' sheet '{sheetDisplayName}' is empty. Skipping. Specify -IncludeEmptyRows to include null rows.");
 				continue;
 			}
 

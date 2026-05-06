@@ -31,7 +31,7 @@ Describe 'Import-Excel Command Tests' {
 
         It 'Should throw InvalidDataException for a plaintext file with an xlsx extension' {
             { Import-Workbook -Path $NonExcelContent -ErrorAction Stop } |
-                Should -Throw -ExceptionType ([InvalidDataException]) -ErrorId 'UnknownFileContent,ExcelFast.PowerShell.Cmdlets.ImportCommand'
+                Should -Throw -ExceptionType ([InvalidDataException]) -ErrorId 'CorruptedZipContent,ExcelFast.PowerShell.Cmdlets.ImportCommand'
         }
 
         It 'Should throw InvalidDataException for a xlsx file that is a zip but is not a valid Excel file' {
@@ -80,6 +80,17 @@ Describe 'Import-Excel Command Tests' {
             $actual[0].Value | Should -Be 'Value1'
             $actual[-1].Name | Should -Be 'Test10'
             $actual[-1].Value | Should -Be 'Value10'
+        }
+
+        It 'Should import each requested sheet when multiple sheet names are provided' {
+            $actual = Import-Workbook -Path $ValidExcelFile -SheetName @('Sheet1', 'Sheet1')
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 20
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[9].Name | Should -Be 'Test10'
+            $actual[10].Name | Should -Be 'Test1'
+            $actual[19].Name | Should -Be 'Test10'
         }
     }
 
