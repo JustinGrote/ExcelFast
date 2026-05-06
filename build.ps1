@@ -110,20 +110,8 @@ try {
 	# Clean up by removing the imported module
 	Remove-Module -Name $ModuleName -Force
 
-	# Create a nupkg with a dumb workaround
-	if (-not $NoPackage) {
-		try {
-			try {
-				Remove-Item $PackagePath/*.nupkg -ErrorAction Stop
-			} catch {
-				if ($_ -notmatch 'it does not exist') { throw }
-			}
-			Register-PSResourceRepository -Name 'PublishLocal' -Uri $PackagePath -Force
-			Publish-PSResource -Path $PublishPath -Repository 'PublishLocal'
-		} finally {
-			Unregister-PSResourceRepository -Name 'PublishLocal'
-		}
-	}
+	Publish-PSResource -Path $PublishPath -DestinationPath $PackagePath
+
 	Write-Host "Module nupkg published to $PackagePath"
 
 } finally {
