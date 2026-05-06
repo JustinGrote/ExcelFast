@@ -109,4 +109,4 @@ jobs:
         # Bugfix for PSResourceRepository not being registered in GitHub Actions environment
         Register-PSResourceRepository -PSGallery -Force
 
-        Publish-PSResource -Path $nupkg.FullName -ApiKey $env:PSGALLERY_API_KEY
+        Publish-PSResource -Nupkg $nupkg.FullName -ApiKey $env:PSGALLERY_API_KEY
