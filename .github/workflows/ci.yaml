@@ -81,9 +81,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 📥 Download Build Artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
-        name: ExcelFast
+        name: ExcelFast-nupkg
         path: ./Release
     - name: 🚢 Publish to PowerShell Gallery
       env:
@@ -92,7 +92,17 @@ jobs:
         $DebugPreference = 'Continue'
         $VerbosePreference = 'Continue'
 
+        $nupkg = Get-ChildItem -Path ./Release/*.nupkg
+        if ($nupkg.Count -eq 0)
+        {
+          throw "No nupkg found in Release directory"
+        }
+        elseif ($nupkg.Count -gt 1)
+        {
+          throw "Multiple nupkg files found in Release directory: $($nupkg.FullName -join ', ')"
+        }
+
         # Bugfix for PSResourceRepository not being registered in GitHub Actions environment
         Register-PSResourceRepository -PSGallery -Force
 
-        Publish-PSResource -Path ./Release -ApiKey $env:PSGALLERY_API_KEY
+        Publish-PSResource -Path $nupkg.FullName -ApiKey $env:PSGALLERY_API_KEY
