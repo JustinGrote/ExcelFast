@@ -91,4 +91,8 @@ jobs:
       run: |
         $DebugPreference = 'Continue'
         $VerbosePreference = 'Continue'
+
+        # Bugfix for PSResourceRepository not being registered in GitHub Actions environment
+        Register-PSResourceRepository -PSGallery -Force
+
         Publish-PSResource -Path ./Release -ApiKey $env:PSGALLERY_API_KEY
