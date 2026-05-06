@@ -13,7 +13,7 @@ Describe 'Save-Workbook Command Tests' {
 
     Context 'When saving a workbook' {
         It 'Should successfully save to a new location' {
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             Save-Workbook -Workbook $workbook -Destination $DestPath
             Test-Path $DestPath | Should -BeTrue
         }
@@ -21,13 +21,13 @@ Describe 'Save-Workbook Command Tests' {
         It 'Should save to its original location when no destination is specified' {
             # Copy the test file to a temp location first
             Copy-Item -Path $ValidExcelFile -Destination $DestPath
-            $workbook = Open-Workbook -Path $DestPath
+            $workbook = Get-Workbook -Path $DestPath
             Save-Workbook -Workbook $workbook
             Test-Path $DestPath | Should -BeTrue
         }
 
         It 'Should create directory path when Force is specified' {
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             Save-Workbook -Workbook $workbook -Destination $TempDirPath -Force
             Test-Path $TempDirPath | Should -BeTrue
         }
@@ -35,7 +35,7 @@ Describe 'Save-Workbook Command Tests' {
 
     Context 'Error handling' {
         It 'Should throw when directory does not exist and Force is not specified' {
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             { Save-Workbook -Workbook $workbook -Destination $TempDirPath -ErrorAction Stop } |
                 Should -Throw -ExceptionType ([DirectoryNotFoundException]) -ErrorId 'DirectoryNotFound,ExcelFast.PowerShell.Cmdlets.SaveCommand'
         }
@@ -43,7 +43,7 @@ Describe 'Save-Workbook Command Tests' {
         It 'Should throw when file exists and Force is not specified' {
             # Create the file first
             '' | Set-Content -Path $DestPath
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             { Save-Workbook -Workbook $workbook -Destination $DestPath -ErrorAction Stop } |
                 Should -Throw -ExceptionType ([IOException]) -ErrorId 'FileAlreadyExists,ExcelFast.PowerShell.Cmdlets.SaveCommand'
         }
@@ -51,13 +51,13 @@ Describe 'Save-Workbook Command Tests' {
 
     Context 'Pipeline Input' {
         It 'Should accept pipeline input' {
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             $workbook | Save-Workbook -Destination $DestPath
             Test-Path $DestPath | Should -BeTrue
         }
 
         It 'Should throw when using Destination with multiple workbooks' {
-            $workbooks = @($ValidExcelFile, $SkippedRow) | ForEach-Object { Open-Workbook -Path $_ }
+            $workbooks = @($ValidExcelFile, $SkippedRow) | ForEach-Object { Get-Workbook -Path $_ }
             { $workbooks | Save-Workbook -Destination $DestPath -ErrorAction Stop } |
                 Should -Throw -ExceptionType ([System.Management.Automation.PSNotSupportedException]) -ErrorId 'MultipleWorkbooksWithDestinationParameter,ExcelFast.PowerShell.Cmdlets.SaveCommand'
         }

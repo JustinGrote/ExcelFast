@@ -13,7 +13,7 @@ $data = Import-Workbook path/to/excel.xlsx
 $data = Import-Workbook path/to/excel.xlsx | Select -First 3
 
 #Open a workbook for editing
-$worksheet = Open-Workbook path/to/excel.xlsx
+$worksheet = Get-Workbook path/to/excel.xlsx
 $worksheet.<tab> #Note there is full intellisense in vscode and excel
 Save-Workbook $worksheet
 
@@ -27,7 +27,7 @@ $data | Export-Workbook path/to/newexcel.xlsx
 |-------|---------|
 | exwb  | Export-Workbook |
 | imwb  | Import-Workbook |
-| owb   | Open-Workbook  |
+| gwb   | Get-Workbook  |
 | svwb  | Save-Workbook  |
 
 ## Development

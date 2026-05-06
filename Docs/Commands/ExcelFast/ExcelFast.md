@@ -26,7 +26,7 @@ High-performance Excel operations for PowerShell
 
 {{ Fill in the Synopsis }}
 
-### [Open-Workbook](Open-Workbook.md)
+### [Get-Workbook](Get-Workbook.md)
 
 {{ Fill in the Synopsis }}
 

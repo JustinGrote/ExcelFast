@@ -27,12 +27,13 @@ public class ImportCommand : BaseCmdlet
 	public string[]? Path { get; set; }
 
 	[Parameter(
+		Position = 0,
 		ParameterSetName = nameof(Workbook),
 		ValueFromPipeline = true,
 		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
 	)]
 	[ValidateNotNullOrEmpty]
-	public ClosedXML.Excel.XLWorkbook? Workbook { get; set; }
+	public XLWorkbook? Workbook { get; set; }
 
 	[Parameter(
 		Position = 1,

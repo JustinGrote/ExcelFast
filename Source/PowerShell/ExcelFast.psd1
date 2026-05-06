@@ -46,15 +46,17 @@
 	CmdletsToExport = @(
 		'Export-Workbook',
 		'Import-Workbook',
-		'Open-Workbook',
+		'Get-Workbook',
 		'Save-Workbook'
 	)
 
 	# Variables to export from this module
-	VariablesToExport = @()
+	VariablesToExport    = @()
 
 	# Aliases to export from this module
 	AliasesToExport      = @(
+		'gwb',
+		'Open-Workbook'
 		'iwb',
 		'owb',
 		'exwb',

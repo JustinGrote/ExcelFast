@@ -42,8 +42,19 @@ Describe 'Import-Excel Command Tests' {
 
     Context 'Workbook Parameter' {
         It 'Should successfully import data from a provided XLWorkbook object on the pipeline' {
-            $workbook = Open-Workbook -Path $ValidExcelFile
+            $workbook = Get-Workbook -Path $ValidExcelFile
             $actual = $workbook | Import-Workbook
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 10
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[-1].Name | Should -Be 'Test10'
+            $actual[-1].Value | Should -Be 'Value10'
+        }
+        It 'Should successfully import data from a provided XLWorkbook object with positional parameter' {
+            $workbook = Get-Workbook -Path $ValidExcelFile
+            $actual = Import-Workbook $workbook
 
             $actual | Should -Not -BeNullOrEmpty
             $actual | Should -HaveCount 10

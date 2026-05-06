@@ -3,10 +3,10 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 using ClosedXML.Excel;
 
-[Cmdlet(VerbsCommon.Open, CmdletDefaultName)]
+[Cmdlet(VerbsCommon.Get, CmdletDefaultName)]
 [OutputType(typeof(XLWorkbook))]
-[Alias("owb")]
-public class OpenCommand : BaseCmdlet
+[Alias("gwb", "Open-Workbook", "owb")]
+public class GetCommand : BaseCmdlet
 {
 	[Parameter(
 			Mandatory = true,

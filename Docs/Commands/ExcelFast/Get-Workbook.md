@@ -1,10 +1,10 @@
 ---
 document type: cmdlet
-external help file: PowerShell.dll-Help.xml
+external help file: ExcelFast.dll-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
-ms.date: 05/14/2025
+ms.date: 05/06/2026
 PlatyPS schema version: 2024-05-01
 title: Get-Workbook
 ---
@@ -48,7 +48,6 @@ Path to the Excel file to import as a workbook.
 Type: System.String[]
 DefaultValue: ''
 SupportsWildcards: false
-ParameterValue: []
 Aliases: []
 ParameterSets:
 - Name: (All)
@@ -72,6 +71,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+
+{{ Fill in the Description }}
+
+### System.String[]
 
 {{ Fill in the Description }}
 

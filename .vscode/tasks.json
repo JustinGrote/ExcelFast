@@ -25,6 +25,25 @@
 				"color": "terminal.ansiYellow",
 				"id": "tools"
 			}
+		},
+		{
+			"label": "test",
+			"type": "shell",
+			"command": "Invoke-Pester -Output Detailed",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared",
+				"clear": true,
+				"showReuseMessage": false
+			},
+			"icon": {
+				"color": "terminal.ansiGreen",
+				"id": "check"
+			}
 		}
 	]
 }
