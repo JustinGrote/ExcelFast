@@ -8,7 +8,7 @@ Describe 'Save-Workbook Command Tests' {
     BeforeEach {
         # Set up test paths in Pester's TestDrive
         $DestPath = Join-Path 'TestDrive:' 'test.xlsx'
-        $TempDirPath = Join-Path 'TestDrive:' 'TestDir' 'test.xlsx'
+        $TempDirPath = Join-Path 'TestDrive:' 'TestDir\test.xlsx'
     }
 
     Context 'When saving a workbook' {

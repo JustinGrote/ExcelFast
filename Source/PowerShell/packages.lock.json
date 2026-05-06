@@ -42,11 +42,11 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
-      "Nullable": {
+      "PolySharp": {
         "type": "Direct",
-        "requested": "[1.3.1, )",
-        "resolved": "1.3.1",
-        "contentHash": "Mk4ZVDfAORTjvckQprCSehi1XgOAAlk5ez06Va/acRYEloN9t6d6zpzJRn5MEq7+RnagyFIq9r+kbWzLGd+6QA=="
+        "requested": "[1.15.0, )",
+        "resolved": "1.15.0",
+        "contentHash": "FbU0El+EEjdpuIX4iDbeS7ki1uzpJPx8vbqOzEtqnl1GZeAGJfq+jCbxeJL2y0EPnUNk8dRnnqR2xnYXg9Tf+g=="
       },
       "PowerShellStandard.Library": {
         "type": "Direct",
@@ -59,6 +59,12 @@
         "requested": "[4.13.1, )",
         "resolved": "4.13.1",
         "contentHash": "KZpLy6ZlCebMk+d/3I5KU2R7AOb4LNJ6tPJqPtvFXmO8bEBHQvCIAvJOnY2tu4C9/aVOROTDYUFADxFqw1gh/g=="
+      },
+      "System.Numerics.Vectors": {
+        "type": "Direct",
+        "requested": "[4.5.0, )",
+        "resolved": "4.5.0",
+        "contentHash": "QQTlPTl06J/iiDbJCiepZ4H//BVraReU4O4EoRw1U02H5TLUIT7xn3GnDp9AXPSlJUDyFs4uWjWafNX6WrAojQ=="
       },
       "ClosedXML.Parser": {
         "type": "Transitive",
@@ -145,11 +151,6 @@
           "System.Numerics.Vectors": "4.4.0",
           "System.Runtime.CompilerServices.Unsafe": "4.5.3"
         }
-      },
-      "System.Numerics.Vectors": {
-        "type": "Transitive",
-        "resolved": "4.5.0",
-        "contentHash": "QQTlPTl06J/iiDbJCiepZ4H//BVraReU4O4EoRw1U02H5TLUIT7xn3GnDp9AXPSlJUDyFs4uWjWafNX6WrAojQ=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Transitive",

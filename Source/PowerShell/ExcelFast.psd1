@@ -40,14 +40,26 @@
 		'Formats/XLTable.Format.ps1xml'
 	)
 
+	ScriptsToProcess     = @('ExcelFast.Init.ps1')
+
 	# Cmdlets to export from this module
-	CmdletsToExport = @('*')
+	CmdletsToExport = @(
+		'Export-Workbook',
+		'Import-Workbook',
+		'Open-Workbook',
+		'Save-Workbook'
+	)
 
 	# Variables to export from this module
 	VariablesToExport = @()
 
 	# Aliases to export from this module
-	AliasesToExport      = @('*')
+	AliasesToExport      = @(
+		'iwb',
+		'owb',
+		'exwb',
+		'svwb'
+	)
 
 	# Private data to pass to the module specified in RootModule/ModuleToProcess
 	PrivateData = @{

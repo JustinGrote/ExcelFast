@@ -29,6 +29,9 @@ if (-not $Version -and $ENV:MODULE_VERSION) {
 
 $ErrorActionPreference = 'Stop'
 
+#Clean the publish directory
+git clean -fdx Artifacts/Module Artifacts/*.nupkg
+
 # Build the module
 try {
 	Push-Location -Path $PSScriptRoot

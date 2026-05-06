@@ -6,7 +6,7 @@ using FilePath = Path;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [Alias("iwb")]
-[OutputType(typeof(PSObject))]
+[OutputType(typeof(PSObject[]))]
 [OutputType(typeof(IEnumerable<dynamic>), ParameterSetName = [nameof(Raw)])]
 public class ImportCommand : BaseCmdlet
 {
@@ -173,12 +173,8 @@ public class ImportCommand : BaseCmdlet
 					);
 					continue;
 				}
-				catch (NotSupportedException ex)
+				catch (NotSupportedException ex) when (ex.Message.Contains("Stream cannot know the file type"))
 				{
-					if (!ex.Message.Contains("Stream cannot know the file type"))
-					{
-						throw;
-					}
 					Error(
 						new InvalidDataException($"{providerPath} has a supported Excel extension but the content is not recognized or unreadable."),
 							"The file may be corrupted or not a supported Excel content type. Try opening the file in Excel. If it works, please file an issue in the ExcelFast GitHub repository.",
