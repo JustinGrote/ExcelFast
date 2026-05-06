@@ -5,6 +5,7 @@ using MiniExcelLibs;
 using FilePath = Path;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
+[Alias("iwb")]
 [OutputType(typeof(PSObject))]
 [OutputType(typeof(IEnumerable<dynamic>), ParameterSetName = [nameof(Raw)])]
 public class ImportCommand : BaseCmdlet
