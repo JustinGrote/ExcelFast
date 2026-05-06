@@ -33,7 +33,16 @@ public class ImportCommand : BaseCmdlet
 		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
 	)]
 	[ValidateNotNullOrEmpty]
-	public XLWorkbook? Workbook { get; set; }
+	public IXLWorkbook? Workbook { get; set; }
+
+	[Parameter(
+		Position = 0,
+		ParameterSetName = nameof(Worksheet),
+		ValueFromPipeline = true,
+		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
+	)]
+	[ValidateNotNullOrEmpty]
+	public IXLWorksheet? Worksheet { get; set; }
 
 	[Parameter(
 		Position = 1,
@@ -78,6 +87,9 @@ public class ImportCommand : BaseCmdlet
 				break;
 			case nameof(Workbook):
 				Path = [GetWorkbookPath(Workbook!)];
+				break;
+			case nameof(Worksheet):
+				Path = [GetWorkbookPath(Worksheet!.Workbook)];
 				break;
 			default:
 				Error(
@@ -279,7 +291,7 @@ public class ImportCommand : BaseCmdlet
 		}
 	}
 
-	static string GetWorkbookPath(XLWorkbook workbook)
+	static string GetWorkbookPath(IXLWorkbook workbook)
 	{
 		string path = workbook.ToString();
 		path = Regex.Replace(path, @"^XLWorkbook\((.*)\)$", "$1");

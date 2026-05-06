@@ -59,7 +59,6 @@ public class ExportCommand : BaseCmdlet
 			if (inputObject is null)
 			{
 				Debug($"Skipping null input object.");
-				continue;
 			}
 		}
 	}

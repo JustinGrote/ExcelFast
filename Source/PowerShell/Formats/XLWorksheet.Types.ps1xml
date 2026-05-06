@@ -6,47 +6,19 @@
             <ScriptProperty>
                 <Name>RowCount</Name>
                 <GetScriptBlock>
-                    $this.RowCount()
+                    @($this.RowsUsed()).count
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>ColumnCount</Name>
                 <GetScriptBlock>
-                    $this.ColumnCount()
+                    @($this.ColumnsUsed()).count
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>IsProtected</Name>
                 <GetScriptBlock>
                     $this.Protection.IsProtected
-                </GetScriptBlock>
-            </ScriptProperty>
-            <ScriptProperty>
-                <Name>FirstRowUsed</Name>
-                <GetScriptBlock>
-                    $firstRow = $this.FirstRowUsed()
-                    if ($null -ne $firstRow) { $firstRow.RowNumber() }
-                </GetScriptBlock>
-            </ScriptProperty>
-            <ScriptProperty>
-                <Name>LastRowUsed</Name>
-                <GetScriptBlock>
-                    $lastRow = $this.LastRowUsed()
-                    if ($null -ne $lastRow) { $lastRow.RowNumber() }
-                </GetScriptBlock>
-            </ScriptProperty>
-            <ScriptProperty>
-                <Name>FirstColumnUsed</Name>
-                <GetScriptBlock>
-                    $firstColumn = $this.FirstColumnUsed()
-                    if ($null -ne $firstColumn) { $firstColumn.ColumnNumber() }
-                </GetScriptBlock>
-            </ScriptProperty>
-            <ScriptProperty>
-                <Name>LastColumnUsed</Name>
-                <GetScriptBlock>
-                    $lastColumn = $this.LastColumnUsed()
-                    if ($null -ne $lastColumn) { $lastColumn.ColumnNumber() }
                 </GetScriptBlock>
             </ScriptProperty>
         </Members>

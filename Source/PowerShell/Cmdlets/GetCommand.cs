@@ -43,7 +43,7 @@ public class GetCommand : BaseCmdlet
 
 			try
 			{
-				XLWorkbook workbook = new(resolvedPath);
+				IXLWorkbook workbook = new XLWorkbook(resolvedPath);
 				WriteObject(workbook);
 			}
 			catch (Exception ex)

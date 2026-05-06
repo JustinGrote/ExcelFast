@@ -13,7 +13,7 @@ public class SaveCommand : BaseCmdlet
 					HelpMessage = "The workbook to save."
 	)]
 	[NotNull]
-	public XLWorkbook? Workbook { get; set; }
+	public IXLWorkbook? Workbook { get; set; }
 
 	[Parameter(
 					Position = 1,
@@ -29,7 +29,7 @@ public class SaveCommand : BaseCmdlet
 	public SwitchParameter Force { get; set; }
 
 	// List to collect workbooks from pipeline
-	private readonly List<XLWorkbook> _workbooks = [];
+	private readonly List<IXLWorkbook> _workbooks = [];
 
 	protected override void ProcessRecord()
 	{
@@ -54,7 +54,7 @@ public class SaveCommand : BaseCmdlet
 		}
 
 		// Process each collected workbook
-		foreach (XLWorkbook workbook in _workbooks)
+		foreach (IXLWorkbook workbook in _workbooks)
 		{
 			try
 			{

@@ -41,7 +41,7 @@ Describe 'Import-Excel Command Tests' {
     }
 
     Context 'Workbook Parameter' {
-        It 'Should successfully import data from a provided XLWorkbook object on the pipeline' {
+        It 'Should import data from a provided XLWorkbook object on the pipeline' {
             $workbook = Get-Workbook -Path $ValidExcelFile
             $actual = $workbook | Import-Workbook
 
@@ -52,7 +52,7 @@ Describe 'Import-Excel Command Tests' {
             $actual[-1].Name | Should -Be 'Test10'
             $actual[-1].Value | Should -Be 'Value10'
         }
-        It 'Should successfully import data from a provided XLWorkbook object with positional parameter' {
+        It 'Should import data from a provided XLWorkbook object with positional parameter' {
             $workbook = Get-Workbook -Path $ValidExcelFile
             $actual = Import-Workbook $workbook
 
@@ -62,6 +62,61 @@ Describe 'Import-Excel Command Tests' {
             $actual[0].Value | Should -Be 'Value1'
             $actual[-1].Name | Should -Be 'Test10'
             $actual[-1].Value | Should -Be 'Value10'
+        }
+        It 'Should import multiple workbooks via pipeline' {
+            $workbooks = Get-Workbook -Path $ValidExcelFile, $ValidExcelFile
+            $actual = $workbooks | Import-Workbook
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 20 # 10 rows from each of the 2 workbooks
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[9].Name | Should -Be 'Test10'
+            $actual[9].Value | Should -Be 'Value10'
+            $actual[10].Name | Should -Be 'Test1'
+            $actual[10].Value | Should -Be 'Value1'
+            $actual[19].Name | Should -Be 'Test10'
+            $actual[19].Value | Should -Be 'Value10'
+        }
+    }
+
+    Context 'Worksheet Parameter' {
+        It 'Should import data from a provided XLWorksheet object on the pipeline' {
+            $worksheet = Get-Workbook -Path $ValidExcelFile | Select-Object -ExpandProperty Worksheets | Where-Object Name -EQ 'Sheet1'
+            $actual = $worksheet | Import-Workbook
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 10
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[-1].Name | Should -Be 'Test10'
+            $actual[-1].Value | Should -Be 'Value10'
+        }
+        It 'Should import data from a provided XLWorksheet object with positional parameter' {
+            $worksheet = Get-Workbook -Path $ValidExcelFile | Select-Object -ExpandProperty Worksheets | Where-Object Name -EQ 'Sheet1'
+            $actual = Import-Workbook $worksheet
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 10
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[-1].Name | Should -Be 'Test10'
+            $actual[-1].Value | Should -Be 'Value10'
+        }
+        It 'Should import multiple worksheets via pipeline' {
+            $worksheets = Get-Workbook -Path $ValidExcelFile | Select-Object -ExpandProperty Worksheets
+            $actual = $worksheets | Import-Workbook
+
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 20 # 10 rows from each of the 2 sheets
+            $actual[0].Name | Should -Be 'Test1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[9].Name | Should -Be 'Test10'
+            $actual[9].Value | Should -Be 'Value10'
+            $actual[10].Name | Should -Be 'Test1'
+            $actual[10].Value | Should -Be 'Value1'
+            $actual[19].Name | Should -Be 'Test10'
+            $actual[19].Value | Should -Be 'Value10'
         }
     }
 
