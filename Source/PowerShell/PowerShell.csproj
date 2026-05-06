@@ -2,7 +2,7 @@
   <Target Name="Default" />
   <PropertyGroup>
     <AssemblyName>ExcelFast</AssemblyName>
-    <RootNamespace>ExcelFast</RootNamespace>
+    <RootNamespace>ExcelFast.PowerShell</RootNamespace>
     <TargetFramework>netstandard2.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
