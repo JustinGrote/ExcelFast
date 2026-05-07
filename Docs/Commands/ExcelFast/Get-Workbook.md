@@ -4,7 +4,7 @@ external help file: ExcelFast.dll-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
-ms.date: 05/06/2026
+ms.date: 05/07/2026
 PlatyPS schema version: 2024-05-01
 title: Get-Workbook
 ---
@@ -13,7 +13,7 @@ title: Get-Workbook
 
 ## SYNOPSIS
 
-{{ Fill in the Synopsis }}
+Opens an Excel workbook for manipulation and analysis.
 
 ## SYNTAX
 
@@ -25,24 +25,55 @@ Get-Workbook [-Path] <string[]> [<CommonParameters>]
 
 ## ALIASES
 
-This cmdlet has the following aliases,
-  {{Insert list of aliases}}
+This cmdlet has the following aliases:
+- `gwb`
+- `owb`
+- `Open-Workbook`
 
 ## DESCRIPTION
 
-{{ Fill in the Description }}
+The Get-Workbook cmdlet opens an Excel workbook file and returns an XLWorkbook object that can be used with other ExcelFast commands. It supports local file paths, as well as remote URLs for files stored online.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Open a local Excel file
 
-{{ Add example description here }}
+```powershell
+Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+```
+
+Opens the Excel file at the specified path and returns the workbook object.
+
+### Example 2: Open multiple Excel files
+
+```powershell
+Get-Workbook -Path 'C:\Data\File1.xlsx', 'C:\Data\File2.xlsx'
+```
+
+Opens multiple Excel files and returns an array of workbook objects.
+
+### Example 3: Use pipeline input with alias
+
+```powershell
+'C:\Data\Spreadsheet.xlsx' | gwb
+```
+
+Uses the short alias `gwb` and passes the file path through the pipeline.
+
+### Example 4: Open workbook and access worksheet
+
+```powershell
+$workbook = Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+$worksheet = $workbook.Worksheets | Where-Object Name -eq 'Sheet1'
+```
+
+Opens a workbook and accesses a specific worksheet by name.
 
 ## PARAMETERS
 
 ### -Path
 
-Path to the Excel file to import as a workbook.
+Specifies the path to the Excel file to open. Accepts local file paths or remote URLs. Supports multiple files for batch processing.
 
 ```yaml
 Type: System.String[]
@@ -58,7 +89,7 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: ''
+HelpMessage: 'Path to the Excel file to import as a workbook.'
 ```
 
 ### CommonParameters
@@ -72,23 +103,27 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.String
 
-{{ Fill in the Description }}
+You can pipe one or more file paths as strings to this cmdlet.
 
 ### System.String[]
 
-{{ Fill in the Description }}
+You can pipe an array of file paths to this cmdlet.
 
 ## OUTPUTS
 
 ### ClosedXML.Excel.XLWorkbook
 
-{{ Fill in the Description }}
+The cmdlet returns one or more XLWorkbook objects representing the opened Excel files.
 
 ## NOTES
 
-{{ Fill in the Notes }}
+- If the workbook is open in Excel or locked by another process, an error will be returned.
+- The workbook must be a valid Excel file (.xlsx or .csv format).
+- Remote files are downloaded to a temporary location and opened from there.
 
 ## RELATED LINKS
 
-{{ Fill in the related links here }}
+- [Import-Workbook](Import-Workbook.md)
+- [Save-Workbook](Save-Workbook.md)
+- [Export-Workbook](Export-Workbook.md)
 

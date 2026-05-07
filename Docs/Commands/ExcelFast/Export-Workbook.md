@@ -4,7 +4,7 @@ external help file: PowerShell.dll-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
-ms.date: 05/14/2025
+ms.date: 05/07/2026
 PlatyPS schema version: 2024-05-01
 title: Export-Workbook
 ---
@@ -13,43 +13,88 @@ title: Export-Workbook
 
 ## SYNOPSIS
 
-{{ Fill in the Synopsis }}
+Exports PowerShell objects to an Excel workbook.
 
 ## SYNTAX
 
 ### __AllParameterSets
 
 ```
-Export-Workbook [-Destination] <string> [-InputObject] <psobject[]> [-SheetName <string>] [-Force]
+Export-Workbook [-Destination] <string> [-InputObject] <PSObject[]> [-SheetName <string>] [-Force]
  [<CommonParameters>]
 ```
 
 ## ALIASES
 
-This cmdlet has the following aliases,
-  {{Insert list of aliases}}
+This cmdlet has the following aliases:
+- `exwb`
 
 ## DESCRIPTION
 
-{{ Fill in the Description }}
+The Export-Workbook cmdlet exports PowerShell objects to an Excel workbook. Objects are converted to rows in the Excel file, with object properties becoming column headers. The cmdlet supports exporting to a single sheet or multiple sheets. If the destination file exists and -Force is not specified, an error will be raised.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Export objects to Excel
 
-{{ Add example description here }}
+```powershell
+$data = @(
+    @{ Name = 'Item1'; Value = 100 },
+    @{ Name = 'Item2'; Value = 200 }
+)
+Export-Workbook -Destination 'C:\Data\Export.xlsx' -InputObject $data
+```
+
+Exports an array of custom objects to a new Excel file.
+
+### Example 2: Export pipeline data
+
+```powershell
+Get-Process | Select-Object Name, CPU, Memory | Export-Workbook -Destination 'C:\Data\Processes.xlsx' -Force
+```
+
+Exports process data from Get-Process to an Excel file, using -Force to overwrite if the file exists.
+
+### Example 3: Export to specific sheet
+
+```powershell
+$users = @(
+    @{ Username = 'user1'; Email = 'user1@example.com' },
+    @{ Username = 'user2'; Email = 'user2@example.com' }
+)
+Export-Workbook -Destination 'C:\Data\Users.xlsx' -InputObject $users -SheetName 'Users'
+```
+
+Exports data to a named sheet instead of the default 'Sheet1'.
+
+### Example 4: Export multiple data sets
+
+```powershell
+$sales = Get-Content -Path 'C:\Data\sales.json' | ConvertFrom-Json
+$users = Import-Csv -Path 'C:\Data\users.csv'
+Export-Workbook -Destination 'C:\Data\Report.xlsx' -InputObject @($sales, $users)
+```
+
+Exports multiple data sets to separate sheets in the workbook.
+
+### Example 5: Export cmdlet output
+
+```powershell
+Get-ChildItem -Path 'C:\Data' -File | Export-Workbook -Destination 'C:\Data\FileList.xlsx' -Force
+```
+
+Exports file system objects to Excel with metadata.
 
 ## PARAMETERS
 
 ### -Destination
 
-Path to the Excel file to export to.
+Specifies the file path where the Excel workbook will be created. If the file already exists, use -Force to overwrite it.
 
 ```yaml
 Type: System.String
 DefaultValue: ''
 SupportsWildcards: false
-ParameterValue: []
 Aliases: []
 ParameterSets:
 - Name: (All)
@@ -60,18 +105,17 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: ''
+HelpMessage: 'Path to the Excel file to export to.'
 ```
 
 ### -Force
 
-Forces overwriting of the destination file if it already exists.
+Overwrites the destination file if it already exists, and creates necessary directory paths.
 
 ```yaml
 Type: System.Management.Automation.SwitchParameter
-DefaultValue: ''
+DefaultValue: false
 SupportsWildcards: false
-ParameterValue: []
 Aliases: []
 ParameterSets:
 - Name: (All)
@@ -82,18 +126,17 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: ''
+HelpMessage: 'Forces overwriting of the destination file if it already exists.'
 ```
 
 ### -InputObject
 
-Objects to export to the Excel file.
+Specifies the PowerShell objects to export to the Excel file. Object properties are exported as column headers, and each object becomes a row.
 
 ```yaml
 Type: System.Management.Automation.PSObject[]
-DefaultValue: ''
+DefaultValue: $null
 SupportsWildcards: false
-ParameterValue: []
 Aliases: []
 ParameterSets:
 - Name: (All)
@@ -104,18 +147,17 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: ''
+HelpMessage: 'Objects to export to the Excel file.'
 ```
 
 ### -SheetName
 
-Name of the sheet to export to. If not specified, exports to 'Sheet1'.
+Specifies the name of the sheet in the Excel workbook. If not specified, uses 'Sheet1'.
 
 ```yaml
 Type: System.String
-DefaultValue: ''
+DefaultValue: 'Sheet1'
 SupportsWildcards: false
-ParameterValue: []
 Aliases: []
 ParameterSets:
 - Name: (All)
@@ -126,7 +168,7 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: ''
+HelpMessage: 'Name of the sheet to export to. If not specified, exports to ''Sheet1''.'
 ```
 
 ### CommonParameters
@@ -140,23 +182,29 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.String
 
-{{ Fill in the Description }}
+You can pipe file paths as the -Destination parameter.
 
 ### System.Management.Automation.PSObject
 
-{{ Fill in the Description }}
+You can pipe PowerShell objects to be exported to the -InputObject parameter.
 
 ## OUTPUTS
 
-### System.Object
-
-{{ Fill in the Description }}
+None. This cmdlet does not produce output objects. Use -Verbose to see status messages.
 
 ## NOTES
 
-{{ Fill in the Notes }}
+- Supported file formats: .xlsx and .csv
+- Object properties become Excel column headers
+- Each object becomes a row in the Excel sheet
+- If no objects are provided, a warning message is displayed
+- Use -Force to overwrite existing files or create directory paths
+- When exporting multiple object arrays, each array is placed in a separate sheet
+- Use -Verbose to see detailed export information
 
 ## RELATED LINKS
 
-{{ Fill in the related links here }}
+- [Get-Workbook](Get-Workbook.md)
+- [Import-Workbook](Import-Workbook.md)
+- [Save-Workbook](Save-Workbook.md)
 
