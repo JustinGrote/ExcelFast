@@ -1,6 +1,6 @@
 ---
 document type: cmdlet
-external help file: ExcelFast.dll-Help.xml
+external help file: ExcelFast-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
@@ -37,18 +37,13 @@ The Get-Workbook cmdlet opens an Excel workbook file and returns an XLWorkbook o
 ## EXAMPLES
 
 ### Example 1: Open a local Excel file
-
-```powershell
 Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
-```
 
 Opens the Excel file at the specified path and returns the workbook object.
 
 ### Example 2: Open multiple Excel files
-
-```powershell
 Get-Workbook -Path 'C:\Data\File1.xlsx', 'C:\Data\File2.xlsx'
-```
+
 
 Opens multiple Excel files and returns an array of workbook objects.
 
@@ -76,7 +71,7 @@ Opens a workbook and accesses a specific worksheet by name.
 Specifies the path to the Excel file to open. Accepts local file paths or remote URLs. Supports multiple files for batch processing.
 
 ```yaml
-Type: System.String[]
+Type: String[]
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
@@ -101,17 +96,17 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
+### String
 
 You can pipe one or more file paths as strings to this cmdlet.
 
-### System.String[]
+### String[]
 
 You can pipe an array of file paths to this cmdlet.
 
 ## OUTPUTS
 
-### ClosedXML.Excel.XLWorkbook
+### XLWorkbook
 
 The cmdlet returns one or more XLWorkbook objects representing the opened Excel files.
 

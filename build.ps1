@@ -8,10 +8,10 @@ param(
 
 	[string]$ModuleName = 'ExcelFast',
 
-	[string]$PublishPath = "$PSScriptRoot/Artifacts/Module",
+	[string]$PublishPath = (Join-Path $PSScriptRoot 'Artifacts\Module'),
 
 	[ValidateNotNullOrWhiteSpace()]
-	[string]$ManifestPath = "$PublishPath/$ModuleName.psd1",
+	[string]$ManifestPath = (Join-Path $PublishPath "$ModuleName.psd1"),
 
 	#Specify this for a non-debug release
 	[switch]$Production,
@@ -30,7 +30,10 @@ if (-not $Version -and $ENV:MODULE_VERSION) {
 $ErrorActionPreference = 'Stop'
 
 #Clean the publish directory
-git clean -fdx Artifacts/Module Artifacts/*.nupkg
+Write-Host -Fore Cyan "Cleaning publish directory: $PublishPath"
+git clean -fdx -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
+
+Write-Host -Fore Cyan 'Building Module'
 
 # Build the module
 try {
@@ -92,23 +95,43 @@ try {
 
 	Write-Host -Fore Cyan "Module Version: $Version"
 
+	Write-Host -Fore Cyan "Updating module manifest '$manifestPath' with cmdlets aliases and types"
+	$formatAndTypeSourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Formats'
+	if (Test-Path $formatAndTypeSourcePath) {
+		[string[]]$formatsToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.format.ps1xml' -File | ForEach-Object { Join-Path 'Formats' $_.Name }
+		[string[]]$typesToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.types.ps1xml' -File | ForEach-Object { Join-Path 'Formats' $_.Name }
+	}
+
 	# Update the module manifest
-	Update-ModuleManifest -Path $manifestPath -CmdletsToExport $cmdletsToExport -AliasesToExport $aliasesToExport -ModuleVersion ([version]$Version) -Prerelease 'PRERELEASEPLACEHOLDER'
+	Update-ModuleManifest -Path $manifestPath -CmdletsToExport $cmdletsToExport -AliasesToExport $aliasesToExport -FormatsToProcess $formatsToProcess -TypesToProcess $typesToProcess -ModuleVersion ([version]$Version) -Prerelease 'PRERELEASEPLACEHOLDER'
 
 	#BUG: Update-ModuleManifest does not support build characters in the version string, hence this workaround.
 	$manifestContent = Get-Content -Path $manifestPath -Raw
 	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
 	Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
-	Write-Host "Module manifest '$manifestPath' updated with cmdlets and aliases."
 
+	Write-Host -Fore Cyan "Exporting MAML help to $PublishPath"
 	# Generate PlatyPS Markdown files
 	$newMarkdownCommandHelpSplat = @{
-		ModuleInfo     = (Import-Module $manifestPath -Force -PassThru)
-		OutputFolder   = "$PSScriptRoot/Docs/Commands"
-		HelpVersion    = ([version]$Version)
-		WithModulePage = $true
+		ModuleInfo                  = (Import-Module $manifestPath -Force -PassThru)
+		OutputFolder                = "$PSScriptRoot/Docs/Commands"
+		HelpVersion                 = ([version]$Version)
+		WithModulePage              = $true
+		AbbreviateParameterTypeName = $true
 	}
-	$helpResult = New-MarkdownCommandHelp @newMarkdownCommandHelpSplat
+	#Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
+	New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
+
+	Get-ChildItem -Recurse -Path $OutputFolder -Include '*.md'
+	| Measure-PlatyPSMarkdown
+	| Where-Object FileType -Match 'CommandHelp'
+	| Import-MarkdownCommandHelp -Path { $_.FilePath }
+	| Export-MamlCommandHelp -OutputFolder $PublishPath -Force
+
+	#HACK: PlatyPS exports the help files to a subfolder named after the module, but to work properly it needs to be in a subfolder named after the culture (en-US). Hence this workaround.
+	New-Item -ItemType Directory -Force (Join-Path $PublishPath 'en-US') | Out-Null
+	Move-Item (Join-Path $PublishPath 'ExcelFast' '*.xml') (Join-Path $PublishPath 'en-US')
+	Remove-Item (Join-Path $PublishPath 'ExcelFast') -Recurse | Out-Null
 
 	# Clean up by removing the imported module
 	Remove-Module -Name $ModuleName -Force
@@ -122,3 +145,6 @@ try {
 	# Return to the original location
 	Pop-Location
 }
+
+Write-Host ''
+Write-Host -Fore Green '✅ Build completed successfully!'

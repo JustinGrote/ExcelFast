@@ -1,6 +1,6 @@
 ---
 document type: cmdlet
-external help file: PowerShell.dll-Help.xml
+external help file: ExcelFast-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
@@ -92,7 +92,7 @@ Exports file system objects to Excel with metadata.
 Specifies the file path where the Excel workbook will be created. If the file already exists, use -Force to overwrite it.
 
 ```yaml
-Type: System.String
+Type: String
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
@@ -113,7 +113,7 @@ HelpMessage: 'Path to the Excel file to export to.'
 Overwrites the destination file if it already exists, and creates necessary directory paths.
 
 ```yaml
-Type: System.Management.Automation.SwitchParameter
+Type: SwitchParameter
 DefaultValue: false
 SupportsWildcards: false
 Aliases: []
@@ -134,7 +134,7 @@ HelpMessage: 'Forces overwriting of the destination file if it already exists.'
 Specifies the PowerShell objects to export to the Excel file. Object properties are exported as column headers, and each object becomes a row.
 
 ```yaml
-Type: System.Management.Automation.PSObject[]
+Type: PSObject[]
 DefaultValue: $null
 SupportsWildcards: false
 Aliases: []
@@ -155,7 +155,7 @@ HelpMessage: 'Objects to export to the Excel file.'
 Specifies the name of the sheet in the Excel workbook. If not specified, uses 'Sheet1'.
 
 ```yaml
-Type: System.String
+Type: String
 DefaultValue: 'Sheet1'
 SupportsWildcards: false
 Aliases: []
@@ -180,11 +180,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
+### String
 
 You can pipe file paths as the -Destination parameter.
 
-### System.Management.Automation.PSObject
+### PSObject
 
 You can pipe PowerShell objects to be exported to the -InputObject parameter.
 

@@ -1,6 +1,6 @@
----
+﻿---
 document type: cmdlet
-external help file: PowerShell.dll-Help.xml
+external help file: ExcelFast-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
@@ -17,31 +17,32 @@ Imports data from an Excel workbook, worksheet, or range into PowerShell objects
 
 ## SYNTAX
 
-### Path (Default)
+### Path
 
 ```
-Import-Workbook [-Path] <string[]> [[-SheetName] <string>] [-NoHeaders] [-StartCell <string>]
- [-EndCell <string>] [-IncludeEmptyRows] [-Raw] [<CommonParameters>]
+Import-Workbook [-Path] <string[]> [[-SheetName] <string[]>] [-NoHeaders] [-StartCell <string>]
+ [-EndCell <string>] [-Raw] [-IncludeEmptyRows] [<CommonParameters>]
 ```
 
 ### Workbook
 
 ```
-Import-Workbook [-Workbook] <IXLWorkbook> [[-SheetName] <string>] [-NoHeaders] [-StartCell <string>]
- [-EndCell <string>] [-IncludeEmptyRows] [-Raw] [<CommonParameters>]
+Import-Workbook [-Workbook] <IXLWorkbook> [[-SheetName] <string[]>] [-NoHeaders]
+ [-StartCell <string>] [-EndCell <string>] [-Raw] [-IncludeEmptyRows] [<CommonParameters>]
 ```
 
 ### Range
 
 ```
-Import-Workbook [-Range] <IXLRangeBase> [-NoHeaders] [-StartCell <string>] [-EndCell <string>]
- [-IncludeEmptyRows] [-Raw] [<CommonParameters>]
+Import-Workbook [-Range] <IXLRangeBase> [[-SheetName] <string[]>] [-NoHeaders] [-StartCell <string>]
+ [-EndCell <string>] [-Raw] [-IncludeEmptyRows] [<CommonParameters>]
 ```
 
 ## ALIASES
 
 This cmdlet has the following aliases:
 - `iwb`
+
 
 ## DESCRIPTION
 
@@ -112,20 +113,15 @@ Includes empty rows in the output. By default, empty rows are skipped.
 ### -EndCell
 
 Specifies the ending cell for data import (e.g., 'D10'). This is only used in conjunction with -StartCell or when -NoHeaders is set to true.
+Specify the ending cell for data import (e.g., 'A1', 'B2'). This is only used when NoHeaders is set to true.
 
 ```yaml
-Type: System.String
+Type: String
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: Named
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: Named
   IsRequired: false
   ValueFromPipeline: false
@@ -133,26 +129,21 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Specify the ending cell for data import (e.g., ''A1'', ''B2''). This is only used when NoHeaders is set to true.'
+HelpMessage: ''
 ```
 
 ### -IncludeEmptyRows
 
 Includes empty rows in the output. By default, empty rows are skipped.
+Include empty rows in the output. By default, empty rows are skipped.
 
 ```yaml
-Type: System.Management.Automation.SwitchParameter
+Type: SwitchParameter
 DefaultValue: false
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: Named
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: Named
   IsRequired: false
   ValueFromPipeline: false
@@ -160,26 +151,21 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Include empty rows in the output. By default, empty rows are skipped.'
+HelpMessage: ''
 ```
 
 ### -NoHeaders
 
 Specifies that the first row should not be used as column headers. All rows will be treated as data.
+Do not use the first row as column headers.
 
 ```yaml
-Type: System.Management.Automation.SwitchParameter
+Type: SwitchParameter
 DefaultValue: false
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: Named
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: Named
   IsRequired: false
   ValueFromPipeline: false
@@ -187,15 +173,16 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Do not use the first row as column headers.'
+HelpMessage: ''
 ```
 
 ### -Path
 
 Specifies the path to the Excel file to import. Can accept multiple file paths for batch import.
+Path to the Excel file to import.
 
 ```yaml
-Type: System.String[]
+Type: String[]
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
@@ -208,15 +195,16 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Path to the Excel file to import.'
+HelpMessage: ''
 ```
 
 ### -Range
 
 Specifies a range object to import. Accepts worksheet ranges, table ranges, or workbook ranges obtained from Get-Workbook.
+Range to import. Accepts Table Ranges, Worksheet Ranges, or Workbook Ranges. Get using Get-Workbook, select the appropriate Worksheet, and then select the appropriate Range from the Ranges property.
 
 ```yaml
-Type: ClosedXML.Excel.IXLRangeBase
+Type: IXLRangeBase
 DefaultValue: $null
 SupportsWildcards: false
 Aliases: []
@@ -229,26 +217,21 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Range to import. Accepts Table Ranges, Worksheet Ranges, or Workbook Ranges. Get using Get-Workbook, select the appropriate Worksheet, and then select the appropriate Range from the Ranges property.'
+HelpMessage: ''
 ```
 
 ### -Raw
 
 Returns the result as a raw dynamic enumerable without PSObject wrapping. Use only for advanced performance use cases.
+Return the result as a raw dynamic enumerable without PSObject wrapping. Use only for advanced performance use cases.
 
 ```yaml
-Type: System.Management.Automation.SwitchParameter
+Type: SwitchParameter
 DefaultValue: false
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: Named
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: Named
   IsRequired: false
   ValueFromPipeline: false
@@ -256,26 +239,21 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Return the result as a raw dynamic enumerable without PSObject wrapping. Use only for advanced performance use cases.'
+HelpMessage: ''
 ```
 
 ### -SheetName
 
 Specifies the name(s) of the sheet(s) to import. If not specified, imports from the first sheet.
+Names of sheet(s) to import. If not specified, imports the first sheet.
 
 ```yaml
-Type: System.String[]
+Type: String[]
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: 1
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: 1
   IsRequired: false
   ValueFromPipeline: false
@@ -283,26 +261,21 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Names of sheet(s) to import. If not specified, imports the first sheet.'
+HelpMessage: ''
 ```
 
 ### -StartCell
 
 Specifies the starting cell for data import (e.g., 'A1', 'B2'). Useful when data doesn't start at A1.
+Specify the starting cell for data import (e.g., 'A1', 'B2').
 
 ```yaml
-Type: System.String
-DefaultValue: 'A1'
+Type: String
+DefaultValue: A1
 SupportsWildcards: false
 Aliases: []
 ParameterSets:
-- Name: Path
-  Position: Named
-  IsRequired: false
-  ValueFromPipeline: false
-  ValueFromPipelineByPropertyName: false
-  ValueFromRemainingArguments: false
-- Name: Workbook
+- Name: (All)
   Position: Named
   IsRequired: false
   ValueFromPipeline: false
@@ -310,15 +283,16 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Specify the starting cell for data import (e.g., ''A1'', ''B2'').'
+HelpMessage: ''
 ```
 
 ### -Workbook
 
 Specifies the XLWorkbook object to import from. Get this from Get-Workbook.
+Workbook object to import. Get using Get-Workbook.
 
 ```yaml
-Type: ClosedXML.Excel.IXLWorkbook
+Type: IXLWorkbook
 DefaultValue: $null
 SupportsWildcards: false
 Aliases: []
@@ -331,7 +305,7 @@ ParameterSets:
   ValueFromRemainingArguments: false
 DontShow: false
 AcceptedValues: []
-HelpMessage: 'Workbook object to import. Get using Get-Workbook.'
+HelpMessage: ''
 ```
 
 ### CommonParameters
@@ -343,27 +317,35 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
+### String
 
 Accepts file paths as input.
 
-### System.String[]
+### String
 
 Accepts an array of file paths for batch import.
 
-### ClosedXML.Excel.IXLWorkbook
+### IXLWorkbook
 
 Accepts XLWorkbook objects from Get-Workbook.
 
-### ClosedXML.Excel.IXLRangeBase
+### IXLRangeBase
 
 Accepts range objects from worksheets or tables.
 
+### String[]
+
+{{ Fill in the Description }}
+
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
+### PSObject
 
 Returns PSObject instances representing each row of data, with properties named from the header row.
+
+### Object
+
+{{ Fill in the Description }}
 
 ## NOTES
 
@@ -377,4 +359,3 @@ Returns PSObject instances representing each row of data, with properties named 
 - [Get-Workbook](Get-Workbook.md)
 - [Save-Workbook](Save-Workbook.md)
 - [Export-Workbook](Export-Workbook.md)
-

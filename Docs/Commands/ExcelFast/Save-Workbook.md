@@ -1,6 +1,6 @@
 ---
 document type: cmdlet
-external help file: PowerShell.dll-Help.xml
+external help file: ExcelFast-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: ExcelFast
@@ -93,7 +93,7 @@ Saves multiple workbooks back to their original locations.
 Specifies the file path where the workbook will be saved. If not specified, the workbook will be saved to its original file location.
 
 ```yaml
-Type: System.String
+Type: String
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
@@ -114,7 +114,7 @@ HelpMessage: 'Destination where the Excel file will be saved. If not specified, 
 Overwrites the destination file if it exists. Can also be used to create directory paths that do not exist.
 
 ```yaml
-Type: System.Management.Automation.SwitchParameter
+Type: SwitchParameter
 DefaultValue: false
 SupportsWildcards: false
 Aliases: []
@@ -135,7 +135,7 @@ HelpMessage: 'If specified, overwrites the file if it exists.'
 Specifies the XLWorkbook object to save. Obtain this from Get-Workbook.
 
 ```yaml
-Type: ClosedXML.Excel.IXLWorkbook
+Type: IXLWorkbook
 DefaultValue: $null
 SupportsWildcards: false
 Aliases: []
@@ -160,7 +160,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### ClosedXML.Excel.IXLWorkbook
+### IXLWorkbook
 
 Accepts XLWorkbook objects from Get-Workbook.
 
