@@ -30,14 +30,16 @@
 	TypesToProcess       = @(
 		'Formats/XLWorkbook.Types.ps1xml',
 		'Formats/XLWorksheet.Types.ps1xml',
-		'Formats/XLTable.Types.ps1xml'
+		'Formats/XLTable.Types.ps1xml',
+		'Formats/XLDefinedName.Types.ps1xml'
 	)
 
 	# Format files (.ps1xml) to be loaded when importing this module
 	FormatsToProcess     = @(
 		'Formats/XLWorkbook.Format.ps1xml',
 		'Formats/XLWorksheet.Format.ps1xml',
-		'Formats/XLTable.Format.ps1xml'
+		'Formats/XLTable.Format.ps1xml',
+		'Formats/XLDefinedName.Format.ps1xml'
 	)
 
 	ScriptsToProcess     = @('ExcelFast.Init.ps1')
