@@ -2,6 +2,8 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 using System.Text.RegularExpressions;
 
+using static ExcelFast.SystemConstants;
+
 using ClosedXML.Excel;
 
 using DocumentFormat.OpenXml.Drawing.Diagrams;
@@ -111,36 +113,53 @@ public class ImportCommand : BaseCmdlet
 
 	internal void ImportWorkbook(string workbookPath)
 	{
-		string providerPath = GetUnresolvedProviderPathFromPSPath(workbookPath);
-		Debug($"Importing Workbook: {providerPath}");
-
-		if (!File.Exists(providerPath))
-		{
-			Error(
-				new FileNotFoundException($"Excel file not found: {providerPath}"),
-				"Check the file path and try again.",
-				"FileNotFound",
-				providerPath
-			);
-			return;
-		}
-
-		string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
-		if (!AcceptedExtensions.Contains(fileExtension))
-		{
-			Error(
-				new ArgumentException(
-					$"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
-					$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
-					"UnsupportedFileType",
-					providerPath
-			);
-			return;
-		}
-
-		IEnumerable<string> sheetNamesToImport = [];
+		string? tempPath = null;
+		string providerPath;
 		try
 		{
+			providerPath = ResolveWorkbookPath(workbookPath, out tempPath);
+		}
+		catch (Exception ex)
+		{
+			Error(
+				ex,
+				"Check the URL and verify the remote file is reachable.",
+				"RemoteFileDownloadFailed",
+				workbookPath
+			);
+			return;
+		}
+
+		Debug($"Importing Workbook: {providerPath}");
+
+		try
+		{
+			if (!File.Exists(providerPath))
+			{
+				Error(
+					new FileNotFoundException($"Excel file not found: {providerPath}"),
+					"Check the file path and try again.",
+					"FileNotFound",
+					providerPath
+				);
+				return;
+			}
+
+			string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
+			if (!AcceptedExtensions.Contains(fileExtension))
+			{
+				Error(
+					new ArgumentException(
+						$"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
+						$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
+						"UnsupportedFileType",
+						providerPath
+				);
+				return;
+			}
+
+			IEnumerable<string> sheetNamesToImport = [];
+
 			IReadOnlyCollection<string> availableSheetNames = MiniExcel.GetSheetNames(providerPath).ToArray();
 			if (SheetName == null || SheetName.Length == 0)
 			{
@@ -173,6 +192,15 @@ public class ImportCommand : BaseCmdlet
 			{
 				ImportSheetData(providerPath, currentSheetName);
 			}
+		}
+		catch (IOException ex) when (ex.HResult == ERROR_SHARING_VIOLATION)
+		{
+			Error(
+				ex,
+				"Ensure the workbook is not open in Excel or locked by another process, then try again.",
+				"WorkbookFileLocked",
+				providerPath
+			);
 		}
 		catch (ArgumentException ex) when (ex.Message.EndsWith("is not a valid Excel file"))
 		{

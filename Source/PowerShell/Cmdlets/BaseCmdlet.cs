@@ -1,7 +1,11 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
+using System.Net.Http;
+
 public abstract class BaseCmdlet : PSCmdlet
 {
+	private static readonly HttpClient HttpClient = new();
+
 	protected string name => MyInvocation.MyCommand.Name;
 
 	internal void Debug(string message) => WriteDebug($"{name}: {message}");
@@ -69,4 +73,49 @@ public abstract class BaseCmdlet : PSCmdlet
 			ErrorCategory category = ErrorCategory.NotSpecified,
 			bool terminating = false) =>
 					Error(new CmdletInvocationException(message), recommendedAction, errorId, targetObject, null, category, terminating);
+
+	protected string ResolveWorkbookPath(string pathItem, out string? tempPath)
+	{
+		tempPath = null;
+
+		if (Uri.TryCreate(pathItem, UriKind.Absolute, out Uri? uri) &&
+			(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+		{
+			string fileName = Path.GetFileName(uri.LocalPath);
+			if (string.IsNullOrWhiteSpace(fileName))
+			{
+				string extension = Path.GetExtension(uri.AbsolutePath);
+				if (string.IsNullOrWhiteSpace(extension))
+				{
+					extension = ".tmp";
+				}
+
+				tempPath = Path.Combine(Path.GetTempPath(), $"ExcelFast-{Guid.NewGuid():N}{extension}");
+			}
+			else
+			{
+				tempPath = Path.Combine(Path.GetTempPath(), fileName);
+				if (File.Exists(tempPath))
+				{
+					string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+					string extension = Path.GetExtension(fileName);
+					tempPath = Path.Combine(Path.GetTempPath(), $"{fileNameWithoutExtension}-{Guid.NewGuid():N}{extension}");
+				}
+			}
+
+			Debug($"Downloading workbook from '{uri}' to temporary file '{tempPath}'.");
+
+			using HttpRequestMessage request = new(HttpMethod.Get, uri);
+			using HttpResponseMessage response = HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
+			response.EnsureSuccessStatusCode();
+
+			using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+			using FileStream outputStream = File.Create(tempPath);
+			contentStream.CopyTo(outputStream);
+
+			return tempPath;
+		}
+
+		return GetUnresolvedProviderPathFromPSPath(pathItem);
+	}
 }
