@@ -80,7 +80,7 @@ Describe 'Import-Excel Command Tests' {
         }
     }
 
-    Context 'Worksheet Parameter' {
+    Context 'Range ParameterSet' {
         It 'Should import data from a provided XLWorksheet object on the pipeline' {
             $worksheet = Get-Workbook -Path $ValidExcelFile | Select-Object -ExpandProperty Worksheets | Where-Object Name -EQ 'Sheet1'
             $actual = $worksheet | Import-Workbook
@@ -108,15 +108,31 @@ Describe 'Import-Excel Command Tests' {
             $actual = $worksheets | Import-Workbook
 
             $actual | Should -Not -BeNullOrEmpty
-            $actual | Should -HaveCount 20 # 10 rows from each of the 2 sheets
+            $actual | Should -HaveCount 12 # 10 rows from each of the 2 sheets
             $actual[0].Name | Should -Be 'Test1'
             $actual[0].Value | Should -Be 'Value1'
             $actual[9].Name | Should -Be 'Test10'
             $actual[9].Value | Should -Be 'Value10'
-            $actual[10].Name | Should -Be 'Test1'
-            $actual[10].Value | Should -Be 'Value1'
-            $actual[19].Name | Should -Be 'Test10'
-            $actual[19].Value | Should -Be 'Value10'
+            $actual[10].Name | Should -Be 'NamedSheet1'
+            $actual[10].Value | Should -Be 'NamedSheetValue1'
+            $actual[11].Name | Should -Be 'NamedSheet2'
+            $actual[11].Value | Should -Be 'NamedSheetValue2'
+        }
+        It 'Should import tables via pipeline' {
+            $worksheets = (Get-Workbook -Path $TablesExcelFile).Worksheets | Foreach-Object Tables
+            $actual = $worksheets | Import-Workbook
+            $actual | Should -Not -BeNullOrEmpty
+            $actual | Should -HaveCount 12 # 3 rows from each of the 2 tables
+            $actual[0].Name | Should -Be 'Table1'
+            $actual[0].Value | Should -Be 'Value1'
+            $actual[2].Name | Should -Be 'Table3'
+            $actual[2].Value | Should -Be 'Value3'
+            $actual[3].Name | Should -Be 'Table4'
+            $actual[3].Value | Should -Be 'Value4'
+            $actual[10].Name | Should -Be 'NamedSheet1'
+            $actual[10].Value | Should -Be 'NamedSheetValue1'
+            $actual[11].Name | Should -Be 'NamedSheet2'
+            $actual[11].Value | Should -Be 'NamedSheetValue2'
         }
     }
 

@@ -13,4 +13,5 @@ BeforeAll {
 	$NonExcelZip = Join-Path $TestDataPath 'NotExcelZip.xlsx'
 	$InvalidPath = Join-Path $TestDataPath 'DoesNotExist.xlsx'
 	$SkippedRow = Join-Path $TestDataPath 'SkippedRow.xlsx'
+	$TablesExcelFile = Join-Path $TestDataPath 'TestTables.xlsx'
 }

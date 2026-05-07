@@ -15,34 +15,35 @@ using FilePath = Path;
 public class ImportCommand : BaseCmdlet
 {
 	[Parameter(
-		ParameterSetName = nameof(Path),
+		Position = 0,
 		Mandatory = true,
-		Position = 0,
-		ValueFromPipeline = true,
-		ValueFromPipelineByPropertyName = true,
-		HelpMessage = "Path to the Excel file to import."
-	)]
-	[ValidateNotNullOrEmpty]
-	[NotNull]
-	public string[]? Path { get; set; }
-
-	[Parameter(
-		Position = 0,
 		ParameterSetName = nameof(Workbook),
 		ValueFromPipeline = true,
-		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
+		HelpMessage = "Workbook object to import. Get using Get-Workbook."
 	)]
 	[ValidateNotNullOrEmpty]
 	public IXLWorkbook? Workbook { get; set; }
 
 	[Parameter(
 		Position = 0,
-		ParameterSetName = nameof(Worksheet),
+		Mandatory = true,
+		ParameterSetName = nameof(Range),
 		ValueFromPipeline = true,
-		HelpMessage = "Names of sheets to import. If not specified, imports the first sheet."
+		HelpMessage = "Range to import. Accepts Table Ranges, Worksheet Ranges, or Workbook Ranges. Get using Get-Workbook, select the appropriate Worksheet, and then select the appropriate Range from the Ranges property."
 	)]
 	[ValidateNotNullOrEmpty]
-	public IXLWorksheet? Worksheet { get; set; }
+	public IXLRangeBase? Range { get; set; }
+
+	[Parameter(
+	ParameterSetName = nameof(Path),
+	Mandatory = true,
+	Position = 0,
+	ValueFromPipeline = true,
+	ValueFromPipelineByPropertyName = true,
+	HelpMessage = "Path to the Excel file to import."
+	)]
+	[NotNull]
+	public string[]? Path { get; set; }
 
 	[Parameter(
 		Position = 1,
@@ -88,8 +89,11 @@ public class ImportCommand : BaseCmdlet
 			case nameof(Workbook):
 				Path = [GetWorkbookPath(Workbook!)];
 				break;
-			case nameof(Worksheet):
-				Path = [GetWorkbookPath(Worksheet!.Workbook)];
+			case nameof(Range):
+				Path = [GetWorkbookPath(Range!.Worksheet.Workbook)];
+				SheetName = [Range.Worksheet.Name];
+				StartCell = Range.RangeAddress.FirstAddress.ToStringRelative();
+				EndCell = Range.RangeAddress.LastAddress.ToStringRelative();
 				break;
 			default:
 				Error(
