@@ -4,21 +4,15 @@
         <Name>ClosedXML.Excel.XLTable</Name>
         <Members>
             <ScriptProperty>
-                <Name>RowCount</Name>
+                <Name>Rows</Name>
                 <GetScriptBlock>
                     $this.RowCount()
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
-                <Name>ColumnCount</Name>
+                <Name>Columns</Name>
                 <GetScriptBlock>
                     $this.ColumnCount()
-                </GetScriptBlock>
-            </ScriptProperty>
-            <ScriptProperty>
-                <Name>Range</Name>
-                <GetScriptBlock>
-                    $this.RangeUsed().RangeAddress.ToString()
                 </GetScriptBlock>
             </ScriptProperty>
         </Members>

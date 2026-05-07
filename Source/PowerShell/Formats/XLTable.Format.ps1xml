@@ -12,19 +12,25 @@
                         <Label>Name</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Range</Label>
+                        <Label>RangesUsed</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>RowCount</Label>
+                        <Label>Rows</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>ColumnCount</Label>
+                        <Label>Columns</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
                         <Label>ShowHeaderRow</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
                         <Label>ShowTotalsRow</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>ShowAutoFilter</Label>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Theme</Label>
                     </TableColumnHeader>
                 </TableHeaders>
                 <TableRowEntries>
@@ -34,19 +40,25 @@
                                 <PropertyName>Name</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>Range</PropertyName>
+                                <PropertyName>RangesUsed</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>RowCount</PropertyName>
+                                <PropertyName>Rows</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>ColumnCount</PropertyName>
+                                <PropertyName>Columns</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>ShowHeaderRow</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>ShowTotalsRow</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>ShowAutoFilter</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>Theme</PropertyName>
                             </TableColumnItem>
                         </TableColumnItems>
                     </TableRowEntry>

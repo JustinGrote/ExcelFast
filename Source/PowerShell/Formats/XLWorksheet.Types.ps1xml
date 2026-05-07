@@ -4,13 +4,13 @@
         <Name>ClosedXML.Excel.XLWorksheet</Name>
         <Members>
             <ScriptProperty>
-                <Name>RowCount</Name>
+                <Name>Rows</Name>
                 <GetScriptBlock>
                     @($this.RowsUsed()).count
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
-                <Name>ColumnCount</Name>
+                <Name>Columns</Name>
                 <GetScriptBlock>
                     @($this.ColumnsUsed()).count
                 </GetScriptBlock>

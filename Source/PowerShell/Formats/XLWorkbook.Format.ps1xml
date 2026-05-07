@@ -15,9 +15,6 @@
                         <Label>Worksheets</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>NamedRanges</Label>
-                    </TableColumnHeader>
-                    <TableColumnHeader>
                         <Label>DefinedNames</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
@@ -46,16 +43,13 @@
                                 <PropertyName>Worksheets</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>NamedRanges</PropertyName>
-                            </TableColumnItem>
-                            <TableColumnItem>
                                 <PropertyName>DefinedNames</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>$_.Author ?? $_.Properties.Author</ScriptBlock>
+                                <PropertyName>Author</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>$_.Properties.Created</ScriptBlock>
+                                <PropertyName>Created</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>Modified</PropertyName>

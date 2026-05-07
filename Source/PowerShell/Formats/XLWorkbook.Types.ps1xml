@@ -17,6 +17,12 @@
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
+                <Name>Created</Name>
+                <GetScriptBlock>
+                    $this.Properties.Created
+                </GetScriptBlock>
+            </ScriptProperty>
+            <ScriptProperty>
                 <Name>Modified</Name>
                 <GetScriptBlock>
                     $this.Properties.Modified
@@ -26,6 +32,12 @@
                 <Name>ModifiedBy</Name>
                 <GetScriptBlock>
                     $this.Properties.LastModifiedBy
+                </GetScriptBlock>
+            </ScriptProperty>
+            <ScriptProperty>
+                <Name>Author</Name>
+                <GetScriptBlock>
+                    $this.Properties.Author
                 </GetScriptBlock>
             </ScriptProperty>
         </Members>

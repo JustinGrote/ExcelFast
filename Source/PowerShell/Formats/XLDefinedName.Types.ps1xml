@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Types>
+    <Type>
+        <Name>ClosedXML.Excel.XLDefinedName</Name>
+        <Members>
+            <ScriptMethod>
+                <Name>ToString</Name>
+                <Script>
+                    "$($this.Name)"
+                </Script>
+            </ScriptMethod>
+        </Members>
+    </Type>
+</Types>

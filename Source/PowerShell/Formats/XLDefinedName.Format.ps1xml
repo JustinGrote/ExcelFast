@@ -2,9 +2,9 @@
 <Configuration>
     <ViewDefinitions>
         <View>
-            <Name>XLWorksheet</Name>
+            <Name>XLDefinedName</Name>
             <ViewSelectedBy>
-                <TypeName>ClosedXML.Excel.XLWorksheet</TypeName>
+                <TypeName>ClosedXML.Excel.XLDefinedName</TypeName>
             </ViewSelectedBy>
             <TableControl>
                 <TableHeaders>
@@ -12,19 +12,16 @@
                         <Label>Name</Label>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Rows</Label>
+                        <Label>Scope</Label>
                     </TableColumnHeader>
-                    <TableColumnHeader>
-                        <Label>Columns</Label>
+										<TableColumnHeader>
+                        <Label>Visible</Label>
                     </TableColumnHeader>
-                    <TableColumnHeader>
-                        <Label>Tables</Label>
+										<TableColumnHeader>
+                        <Label>Ranges</Label>
                     </TableColumnHeader>
-                    <TableColumnHeader>
-                        <Label>NamedRanges</Label>
-                    </TableColumnHeader>
-                    <TableColumnHeader>
-                        <Label>IsProtected</Label>
+										<TableColumnHeader>
+                        <Label>Comment</Label>
                     </TableColumnHeader>
                 </TableHeaders>
                 <TableRowEntries>
@@ -34,19 +31,16 @@
                                 <PropertyName>Name</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>Rows</PropertyName>
+                                <PropertyName>Scope</PropertyName>
                             </TableColumnItem>
-                            <TableColumnItem>
-                                <PropertyName>Columns</PropertyName>
+														<TableColumnItem>
+                                <PropertyName>Visible</PropertyName>
                             </TableColumnItem>
-                            <TableColumnItem>
-                                <PropertyName>Tables</PropertyName>
+														<TableColumnItem>
+                                <PropertyName>Ranges</PropertyName>
                             </TableColumnItem>
-                            <TableColumnItem>
-                                <PropertyName>NamedRanges</PropertyName>
-                            </TableColumnItem>
-                            <TableColumnItem>
-                                <PropertyName>IsProtected</PropertyName>
+														<TableColumnItem>
+                                <PropertyName>Comment</PropertyName>
                             </TableColumnItem>
                         </TableColumnItems>
                     </TableRowEntry>
