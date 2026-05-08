@@ -96,6 +96,7 @@ user2,user2@example.com
 
 	Context 'Object conversion' {
 		It 'Should honor WhatIf and not create destination file' {
+			$DestPath = Join-Path ([System.IO.Path]::GetTempPath()) ("{0}.xlsx" -f [guid]::NewGuid())
 			$rows = @(
 				[PSCustomObject]@{ Name = 'WhatIf1'; Value = 'Value1' }
 			)
@@ -154,6 +155,40 @@ user2,user2@example.com
 			$actual[0].Value | Should -Be 'Value1'
 			$actual[1].Name | Should -Be 'Hash2'
 			$actual[1].Value | Should -Be 'Value2'
+		}
+
+		It 'Should export multiple hashtables passed by InputObject parameter' {
+			$rows = @(
+				[ordered]@{ Name = 'ParamHash1'; Value = 10 }
+				[ordered]@{ Name = 'ParamHash2'; Value = 20 }
+			)
+
+			Export-Workbook -Destination $DestPath -InputObject $rows
+			$actual = Import-Workbook -Path $DestPath
+
+			$actual | Should -HaveCount 2
+			$actual[0].Name | Should -Be 'ParamHash1'
+			$actual[0].Value | Should -Be 10
+			$actual[1].Name | Should -Be 'ParamHash2'
+			$actual[1].Value | Should -Be 20
+		}
+
+		It 'Should export an array of arrays as indexed IDictionary-style columns' {
+			$rows = @(
+				,[object[]]@('R1', 1, 'X')
+				,[object[]]@('R2', 2, 'Y')
+			)
+
+			Export-Workbook -Destination $DestPath -InputObject $rows
+			$actual = Import-Workbook -Path $DestPath
+
+			$actual | Should -HaveCount 2
+			$actual[0].Column1 | Should -Be 'R1'
+			$actual[0].Column2 | Should -Be 1
+			$actual[0].Column3 | Should -Be 'X'
+			$actual[1].Column1 | Should -Be 'R2'
+			$actual[1].Column2 | Should -Be 2
+			$actual[1].Column3 | Should -Be 'Y'
 		}
 
 		It 'Should export generic dictionary rows' {
