@@ -98,8 +98,11 @@ try {
 	Write-Host -Fore Cyan "Updating module manifest '$manifestPath' with cmdlets aliases and types"
 	$formatAndTypeSourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Formats'
 	if (Test-Path $formatAndTypeSourcePath) {
-		[string[]]$formatsToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.format.ps1xml' -File | ForEach-Object { Join-Path 'Formats' $_.Name }
-		[string[]]$typesToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.types.ps1xml' -File | ForEach-Object { Join-Path 'Formats' $_.Name }
+		[string[]]$formatsToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.format.ps1xml' -File
+		| ForEach-Object { Join-Path 'Formats' $_.Name }
+
+		[string[]]$typesToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.types.ps1xml' -File
+		| ForEach-Object { Join-Path 'Formats' $_.Name }
 	}
 
 	# Update the module manifest
@@ -119,6 +122,7 @@ try {
 		WithModulePage              = $true
 		AbbreviateParameterTypeName = $true
 	}
+
 	#Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
 	New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
 

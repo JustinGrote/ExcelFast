@@ -1,0 +1,251 @@
+TOPIC
+    about_ExcelFast
+
+SHORT DESCRIPTION
+    ExcelFast is a high-performance PowerShell module for working with Excel
+    files without requiring Microsoft Excel to be installed.
+
+LONG DESCRIPTION
+    ExcelFast provides a complete set of cmdlets for reading, writing, and
+    manipulating Excel workbooks. Built on ClosedXML and MiniExcel libraries,
+    it delivers fast operations suitable for enterprise automation tasks, data
+    processing pipelines, and reporting workflows.
+
+KEY FEATURES
+    - No Excel Installation Required: Works independently without Microsoft Excel
+    - High Performance: Optimized for large files and bulk operations
+    - Multiple Input Formats: Supports .xlsx and .csv files
+    - Flexible Data Access: Read from workbooks, worksheets, ranges, or tables
+    - Object Pipeline Integration: Works seamlessly with PowerShell objects
+    - Multiple Parameter Sets: Different modes for different use cases (file
+      path, workbook object, range object)
+
+BASIC WORKFLOW
+    ExcelFast follows a simple three-step workflow for most operations:
+
+    Step 1: Open a Workbook (Get-Workbook)
+
+        $workbook = Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+
+        The Get-Workbook cmdlet opens an Excel file and returns an XLWorkbook
+        object.
+
+        Aliases: gwb, owb, Open-Workbook
+
+    Step 2: Work with the Data
+
+        Option A: Import Data (Import-Workbook)
+
+            $data = $workbook | Import-Workbook
+
+            Convert workbook data into PowerShell objects for processing.
+
+        Option B: Export Data (Export-Workbook)
+
+            $processData | Export-Workbook -Destination 'C:\Data\Report.xlsx' -Force
+
+            Export PowerShell objects directly to Excel format.
+
+    Step 3: Save the Workbook (Save-Workbook)
+
+        $workbook | Save-Workbook -Destination 'C:\Data\Modified.xlsx' -Force
+
+        Save the workbook to a file location, with optional file overwrite.
+
+COMMON TASKS
+    Read Excel Data
+
+        # Import all data from first sheet
+        $data = Import-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+
+        # Import specific sheet
+        $salesData = Import-Workbook -Path 'C:\Data\Spreadsheet.xlsx' -SheetName 'Sales'
+
+        # Import without headers
+        $data = Import-Workbook -Path 'C:\Data\Spreadsheet.xlsx' -NoHeaders
+
+    Write Data to Excel
+
+        # Export array of objects to Excel
+        Get-Process | Select-Object Name, CPU, Memory |
+            Export-Workbook -Destination 'C:\Data\Processes.xlsx' -Force
+
+        # Export data from file to Excel
+        Import-Csv 'C:\Data\data.csv' |
+            Export-Workbook -Destination 'C:\Data\data.xlsx' -SheetName 'Imported'
+
+    Modify Workbooks
+
+        # Open workbook, modify, and save
+        $workbook = Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+
+        # Use ClosedXML properties to modify (advanced)
+        $worksheet = $workbook.Worksheets.First()
+
+        # Save changes
+        Save-Workbook -Workbook $workbook
+
+    Import from Specific Range
+
+        # Import from specific cell range
+        $data = Import-Workbook -Path 'C:\Data\Spreadsheet.xlsx' `
+          -StartCell 'B2' -EndCell 'D10'
+
+        # Include empty rows
+        $data = Import-Workbook -Path 'C:\Data\Spreadsheet.xlsx' -IncludeEmptyRows
+
+    Batch Processing
+
+        # Process multiple files
+        @('File1.xlsx', 'File2.xlsx', 'File3.xlsx') |
+          ForEach-Object { Import-Workbook -Path $_ } |
+          Export-Workbook -Destination 'C:\Data\Combined.xlsx' -Force
+
+        # Or use pipeline directly
+        Get-ChildItem -Path 'C:\Data\*.xlsx' |
+          ForEach-Object { Get-Workbook -Path $_.FullName | Import-Workbook }
+
+    Pipeline Operations
+
+        # Full pipeline example
+        Get-Workbook -Path 'C:\Data\input.xlsx' |
+          Import-Workbook |
+          Where-Object { $_.Status -eq 'Active' } |
+          Select-Object Name, Email, Department |
+          Export-Workbook -Destination 'C:\Data\active_users.xlsx' -Force
+
+PARAMETER SETS
+    Get-Workbook
+        Default: Accept file paths (local or remote URLs)
+
+    Import-Workbook
+        Three parameter sets for different input modes:
+        1. Path (default): Accept file paths
+        2. Workbook: Accept XLWorkbook objects from Get-Workbook
+        3. Range: Accept worksheet or table range objects
+
+    Export-Workbook
+        Default: Export objects to Excel destination
+
+    Save-Workbook
+        Default: Save workbook to file location
+
+ADVANCED USAGE
+    Working with ClosedXML
+
+        ExcelFast returns ClosedXML objects. For advanced manipulation, access
+        ClosedXML properties directly:
+
+            $workbook = Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+
+            # Access worksheets
+            $sheet = $workbook.Worksheets | Where-Object Name -eq 'Sheet1'
+
+            # Create new worksheet
+            $newSheet = $workbook.Worksheets.Add('NewSheet')
+
+            # Work with ranges
+            $range = $sheet.Range('A1:D10')
+
+            # Save after modifications
+            Save-Workbook -Workbook $workbook
+
+    Performance Optimization
+
+        For large files, use the -Raw parameter with Import-Workbook:
+
+            # Returns raw dynamic enumerable without PSObject wrapping
+            $data = Import-Workbook -Path 'C:\Data\LargeFile.xlsx' -Raw
+
+SUPPORTED FORMATS
+    .xlsx    Excel 2007 and later format (recommended)
+    .csv     Comma-separated values
+
+TROUBLESHOOTING
+    "Workbook is locked by another process"
+
+        The file is open in Excel or another application. Close it and try again.
+
+            # Use Import-Workbook for read-only access
+            $data = Import-Workbook -Path 'C:\Data\File.xlsx'
+
+    "File not found"
+
+        Verify the file path exists:
+
+            Test-Path -Path 'C:\Data\Spreadsheet.xlsx'
+
+            # Or use full path
+            $fullPath = (Resolve-Path 'C:\Data\Spreadsheet.xlsx').Path
+            Get-Workbook -Path $fullPath
+
+    "Sheet does not exist"
+
+        Verify the sheet name is correct:
+
+            $workbook = Get-Workbook -Path 'C:\Data\Spreadsheet.xlsx'
+            $workbook.Worksheets | Select-Object Name
+
+ALIASES
+    Alias           Command
+    -----           -------
+    gwb             Get-Workbook
+    owb             Get-Workbook
+    Open-Workbook   Get-Workbook
+    iwb             Import-Workbook
+    exwb            Export-Workbook
+    svwb            Save-Workbook
+
+EXAMPLES
+    Example 1: Create a simple report from process data
+
+        # Get process information and export to Excel
+        Get-Process |
+          Select-Object Name, CPU, Memory, Handles |
+          Export-Workbook -Destination 'C:\Reports\ProcessReport.xlsx' -Force
+
+        # Verify the file was created
+        Get-Item -Path 'C:\Reports\ProcessReport.xlsx'
+
+    Example 2: Consolidate data from multiple sheets
+
+        # Get workbook and import all sheets
+        $workbook = Get-Workbook -Path 'C:\Data\MultiSheet.xlsx'
+
+        # Import Sheet1
+        $sheet1 = Import-Workbook -Path 'C:\Data\MultiSheet.xlsx' -SheetName 'Sheet1'
+
+        # Import Sheet2
+        $sheet2 = Import-Workbook -Path 'C:\Data\MultiSheet.xlsx' -SheetName 'Sheet2'
+
+        # Combine and export
+        @($sheet1, $sheet2) |
+          Export-Workbook -Destination 'C:\Data\Combined.xlsx' -Force
+
+    Example 3: Filter and reorganize data
+
+        # Import data, filter, reorganize
+        $data = Import-Workbook -Path 'C:\Data\Sales.xlsx'
+
+        $filtered = $data |
+          Where-Object { [decimal]$_.Amount -gt 1000 } |
+          Sort-Object -Property Date -Descending |
+          Select-Object Date, Customer, Amount, Product
+
+        # Export filtered results
+        $filtered | Export-Workbook -Destination 'C:\Data\HighValue.xlsx' -Force
+
+NOTES
+    - ExcelFast does not require Microsoft Excel to be installed
+    - Large workbooks may require significant memory
+    - Use pipeline operations for efficient data processing
+    - File paths can be local or remote URLs (for Get-Workbook)
+    - The module supports PowerShell 5.0 and later
+
+RELATED LINKS
+    Get-Workbook
+    Import-Workbook
+    Export-Workbook
+    Save-Workbook
+    ClosedXML Documentation: https://github.com/ClosedXML/ClosedXML
+    MiniExcel Documentation:  https://github.com/shps951023/MiniExcel

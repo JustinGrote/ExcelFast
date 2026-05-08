@@ -42,6 +42,7 @@
     <Copy SourceFiles="@(FormatFiles)" DestinationFolder="$(PublishDir)\Formats" />
     <Copy SourceFiles="../../LICENSE.MD" DestinationFolder="$(PublishDir)" />
     <Copy SourceFiles="../../README.MD" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="../../Docs/about_ExcelFast.help.txt" DestinationFolder="$(PublishDir)\en-US" />
     <Copy SourceFiles="../../THIRD-PARTY-NOTICES.TXT" DestinationFolder="$(PublishDir)" />
   </Target>
 </Project>

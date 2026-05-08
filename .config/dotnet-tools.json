@@ -8,6 +8,13 @@
         "dotnet-gitversion"
       ],
       "rollForward": false
+    },
+    "nuget-license": {
+      "version": "4.0.10",
+      "commands": [
+        "nuget-license"
+      ],
+      "rollForward": false
     }
   }
 }
