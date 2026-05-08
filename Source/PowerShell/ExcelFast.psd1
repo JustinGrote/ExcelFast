@@ -26,25 +26,7 @@
 	# Minimum version of the PowerShell engine required by this module
 	PowerShellVersion    = '5.1'
 
-	# Type files (.ps1xml) to be loaded when importing this module
-	TypesToProcess       = @(
-		'Formats/XLWorkbook.Types.ps1xml',
-		'Formats/XLWorksheet.Types.ps1xml',
-		'Formats/XLTable.Types.ps1xml',
-		'Formats/XLDefinedName.Types.ps1xml'
-	)
-
-	# Format files (.ps1xml) to be loaded when importing this module
-	FormatsToProcess     = @(
-		'Formats/XLWorkbook.Format.ps1xml',
-		'Formats/XLWorksheet.Format.ps1xml',
-		'Formats/XLTable.Format.ps1xml',
-		'Formats/XLDefinedName.Format.ps1xml'
-	)
-
 	ScriptsToProcess     = @('ExcelFast.Init.ps1')
-	# Variables to export from this module
-	VariablesToExport    = @()
 
 	# Private data to pass to the module specified in RootModule/ModuleToProcess
 	PrivateData = @{
