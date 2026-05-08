@@ -1,4 +1,3 @@
-#requires -Modules @{ModuleName='Microsoft.PowerShell.Platyps'; ModuleVersion='1.0.0'}
 using namespace System.Management.Automation
 
 #This script is called by MSBuild
@@ -31,7 +30,11 @@ $ErrorActionPreference = 'Stop'
 
 #Clean the publish directory
 Write-Host -Fore Cyan "Cleaning publish directory: $PublishPath"
-git clean -fdx -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
+$env:GIT_ASK_YESNO = 'false'
+git clean -fdx --no-interactive -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
+if ($LASTEXITCODE -ne 0) {
+	throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked"
+}
 
 Write-Host -Fore Cyan 'Building Module'
 
@@ -42,13 +45,25 @@ try {
 
 	# Import the module to discover its commands and aliases
 	$manifestPath = Resolve-Path $ManifestPath
-	Import-Module -Name $manifestPath -Force
 
-	# Get cmdlets to export
-	$cmdletsToExport = (Get-Command -CommandType Cmdlet -Module $ModuleName).Name
+	#HACK: Because importing the module loads the .NET assemblies and locks them to the session, we want it in a separate process.
+	$job = Start-Job -ArgumentList $ManifestPath, $ModuleName -ScriptBlock {
+		param(
+			[string]$ManifestPath,
+			[string]$ModuleName
+		)
 
-	# Get aliases to export
-	$aliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
+		Import-Module -Name $ManifestPath -Force
+
+		return @{
+			CmdletsToExport = (Get-Command -CommandType Cmdlet -Module $ModuleName).Name
+			AliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
+		}
+	}
+
+	$jobOutput = Receive-Job -Job $job -Wait -AutoRemoveJob
+	$cmdletsToExport = $jobOutput.CmdletsToExport
+	$aliasesToExport = $jobOutput.AliasesToExport
 
 	if ($null -eq $Version) {
 		# If this is a tagged build, use the version from the tag
@@ -113,32 +128,45 @@ try {
 	$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
 	Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
 
+	#HACK: Because PlatyPS loads the .NET assemblies and locks them to the session, we want it in a separate process.
 	Write-Host -Fore Cyan "Exporting MAML help to $PublishPath"
-	# Generate PlatyPS Markdown files
-	$newMarkdownCommandHelpSplat = @{
-		ModuleInfo                  = (Import-Module $manifestPath -Force -PassThru)
-		OutputFolder                = "$PSScriptRoot/Docs/Commands"
-		HelpVersion                 = ([version]$Version)
-		WithModulePage              = $true
-		AbbreviateParameterTypeName = $true
+	[version]$helpVersion = $Version
+	Start-Job -ArgumentList $ManifestPath, $PublishPath, "$PSScriptRoot/Docs/Commands", $helpVersion -ScriptBlock {
+		#requires -Modules @{ModuleName='Microsoft.PowerShell.Platyps'; ModuleVersion='1.0.0'}
+
+		param(
+			[string]$ManifestPath,
+			[string]$PublishPath,
+			[string]$DocsPath,
+			[version]$HelpVersion
+		)
+		Write-Host -Fore Cyan "Exporting MAML help to $PublishPath from job with manifest path: $ManifestPath and help version: $HelpVersion"
+		$newMarkdownCommandHelpSplat = @{
+			ModuleInfo                  = (Import-Module $ManifestPath -Force -PassThru)
+			OutputFolder                = $DocsPath
+			HelpVersion                 = $HelpVersion
+			WithModulePage              = $true
+			AbbreviateParameterTypeName = $true
+			# Ignore warnings about existing markdown files
+			WarningAction               = 'SilentlyContinue'
+		}
+
+		#Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
+		Write-Host -Fore Cyan "Generating markdown command help for new or changed commands. Output folder: $($newMarkdownCommandHelpSplat.OutputFolder)"
+		New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
+
+		Get-ChildItem -Recurse -Path $newMarkdownCommandHelpSplat.OutputFolder -Include '*.md'
+		| Measure-PlatyPSMarkdown
+		| Where-Object FileType -Match 'CommandHelp'
+		| Import-MarkdownCommandHelp -Path { $_.FilePath }
+		| Export-MamlCommandHelp -OutputFolder $PublishPath -Force
 	}
-
-	#Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
-	New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
-
-	Get-ChildItem -Recurse -Path $OutputFolder -Include '*.md'
-	| Measure-PlatyPSMarkdown
-	| Where-Object FileType -Match 'CommandHelp'
-	| Import-MarkdownCommandHelp -Path { $_.FilePath }
-	| Export-MamlCommandHelp -OutputFolder $PublishPath -Force
+	| Receive-Job -Wait -AutoRemoveJob
 
 	#HACK: PlatyPS exports the help files to a subfolder named after the module, but to work properly it needs to be in a subfolder named after the culture (en-US). Hence this workaround.
 	New-Item -ItemType Directory -Force (Join-Path $PublishPath 'en-US') | Out-Null
 	Move-Item (Join-Path $PublishPath 'ExcelFast' '*.xml') (Join-Path $PublishPath 'en-US')
 	Remove-Item (Join-Path $PublishPath 'ExcelFast') -Recurse | Out-Null
-
-	# Clean up by removing the imported module
-	Remove-Module -Name $ModuleName -Force
 
 	#Package the nuget
 	Compress-PSResource -Path $PublishPath -DestinationPath $PackagePath
