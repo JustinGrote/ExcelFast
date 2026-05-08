@@ -1,12 +1,14 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
+using System.Collections;
+
 using MiniExcelLibs;
 
 using static System.Management.Automation.PSSerializer;
 
 using FilePath = Path;
 
-[Cmdlet(VerbsData.Export, CmdletDefaultName)]
+[Cmdlet(VerbsData.Export, CmdletDefaultName, SupportsShouldProcess = true)]
 [Alias("exwb")]
 public class ExportCommand : BaseCmdlet
 {
@@ -44,73 +46,89 @@ public class ExportCommand : BaseCmdlet
 	// Used in logging
 	private string Name => MyInvocation.MyCommand.Name;
 
-	// Collection to store all input objects organized by sheet
-	private readonly List<List<PSObject>> sheetObjects = [];
-	// Current sheet being processed
-	private List<PSObject> currentSheet = [];
-
-	// Used to store the initial detected columns. This is to ensure subsequent columns are not added.
-	private List<string>? columns;
+	// Collection to store all rows for the target sheet.
+	private readonly List<Dictionary<string, object>> objectsToExport = [];
 
 	protected override void ProcessRecord()
 	{
+		if (InputObject is null || InputObject.Length == 0)
+		{
+			return;
+		}
+
 		foreach (PSObject inputObject in InputObject)
 		{
 			if (inputObject is null)
 			{
 				Debug($"Skipping null input object.");
+				continue;
 			}
+			Dictionary<string, object> row = ConvertToDictionary(inputObject);
+			objectsToExport.Add(row);
 		}
 	}
 
-	private void ConvertToDictionary(PSObject inputObject)
+	private Dictionary<string, object> ConvertToDictionary(PSObject inputObject)
 	{
-		// Check if this is a nested array
-		if (inputObject.BaseObject is Array nestedArray)
+		if (TryConvertDictionary(inputObject.BaseObject, out Dictionary<string, object> row))
 		{
-			// If we already have objects in the current sheet, add it to our sheets collection
-			if (currentSheet.Count > 0)
+			return row;
+		}
+
+		// Sanitize the PSObject by serializing and deserializing it
+		PSObject cleanObject = new(Deserialize(Serialize(inputObject)));
+
+		if (TryConvertDictionary(cleanObject.BaseObject, out row))
+		{
+			return row;
+		}
+
+		row = [];
+		foreach (PSPropertyInfo property in cleanObject.Properties)
+		{
+			row[property.Name] = property.Value ?? string.Empty;
+		}
+
+		if (row.Count > 0)
+		{
+			return row;
+		}
+
+		row["Value"] = cleanObject.BaseObject ?? string.Empty;
+		return row;
+	}
+
+	private static bool TryConvertDictionary(object? value, out Dictionary<string, object> row)
+	{
+		row = [];
+
+		if (value is not IDictionary dictionary)
+		{
+			return false;
+		}
+
+		foreach (DictionaryEntry entry in dictionary)
+		{
+			if (entry.Key is null)
 			{
-				sheetObjects.Add(currentSheet);
-				currentSheet = [];
+				continue;
 			}
 
-			// Create a new sheet for this array
-			List<PSObject> arraySheet = [];
-			foreach (var item in nestedArray)
+			string normalizedKey = entry.Key.ToString() ?? string.Empty;
+			if (string.IsNullOrWhiteSpace(normalizedKey))
 			{
-				if (item is PSObject psObj)
-				{
-					arraySheet.Add(psObj);
-				}
-				else
-				{
-					arraySheet.Add(new PSObject(item));
-				}
+				continue;
 			}
 
-			if (arraySheet.Count > 0)
-			{
-				sheetObjects.Add(arraySheet);
-			}
+			row[normalizedKey] = entry.Value ?? string.Empty;
 		}
-		else
-		{
-			// Regular object, add to current sheet
-			currentSheet.Add(inputObject);
-		}
+
+		return true;
 	}
 
 	protected override void EndProcessing()
 	{
-		// Add any remaining objects in currentSheet to sheetObjects
-		if (currentSheet.Count > 0)
-		{
-			sheetObjects.Add(currentSheet);
-		}
-
-		// If no sheets have objects, display warning and return
-		if (sheetObjects.Count == 0 || sheetObjects.All(sheet => sheet.Count == 0))
+		if (objectsToExport.Count == 0)
 		{
 			Warning($"No objects to export.");
 			return;
@@ -135,9 +153,10 @@ public class ExportCommand : BaseCmdlet
 
 			string? directory = FilePath.GetDirectoryName(providerPath);
 			bool directoryExists = string.IsNullOrEmpty(directory) || Directory.Exists(directory);
+			bool destinationExists = File.Exists(providerPath);
 
 			// Check if file or directory needs force
-			if (!Force.IsPresent && (!directoryExists || File.Exists(providerPath)))
+			if (!Force.IsPresent && (!directoryExists || destinationExists))
 			{
 				Error(
 					new IOException($"Path '{providerPath}' already exists or requires directory creation."),
@@ -145,6 +164,12 @@ public class ExportCommand : BaseCmdlet
 					"PathRequiresForce",
 					providerPath
 				);
+				return;
+			}
+
+			string operation = destinationExists ? "Overwrite workbook" : "Create workbook";
+			if (!ShouldProcess(providerPath, operation))
+			{
 				return;
 			}
 
@@ -156,29 +181,7 @@ public class ExportCommand : BaseCmdlet
 
 			// Prepare data for all sheets
 			Dictionary<string, object> sheetsData = new();
-
-			for (int i = 0; i < sheetObjects.Count; i++)
-			{
-				List<PSObject> sheetData = sheetObjects[i];
-				string sheetName = GenerateSheetName(i);
-
-				// Convert PSObjects to a list of dictionaries for this sheet
-				List<Dictionary<string, object>> dataToExport = [];
-				foreach (PSObject obj in sheetData)
-				{
-					// Sanitize the PSObject
-					PSObject cleanObj = new(Deserialize(Serialize(obj)));
-
-					Dictionary<string, object> row = [];
-					foreach (PSPropertyInfo property in cleanObj.Properties)
-					{
-						row[property.Name] = property.Value ?? string.Empty;
-					}
-					dataToExport.Add(row);
-				}
-
-				sheetsData[sheetName] = dataToExport;
-			}
+			sheetsData[SheetName] = objectsToExport;
 
 			// Save data to Excel file
 			MiniExcel.SaveAs(providerPath, sheetsData, overwriteFile: Force.IsPresent);
