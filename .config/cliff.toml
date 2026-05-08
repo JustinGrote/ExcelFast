@@ -1,0 +1,33 @@
+[changelog]
+# Adds the commit link for each type
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {{ commit.message
+	| replace_regex(from="^(🚨|✨|🪳|📄|⚡|♻️|🎨|🧪|🛠️|⬆️|👷|♂️|♂️){1,2}\\s*", to="")
+	| upper_first
+}} ([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/justingrote/excelfast/commit/{{ commit.id }}))
+{% endfor %}
+{% endfor %}
+"""
+
+[git]
+conventional_commits = false
+commit_parsers = [
+    { message = "^🚨", group = "<!-- 0 -->🚨 Breaking Changes"},
+    { message = "^✨", group = "<!-- 1 -->✨ New Features"},
+    { message = "^🪳", group = "<!-- 2 -->🪳 Bug Fixes"},
+		{ message = "^⬆️", group = "<!-- 3 -->⬆️ Dependency Updates" },
+		{ message = "^⚡",  group = "<!-- 5 -->⚡ Performance Improvements"},
+		{ message = "^🛠️", group = "<!-- 4 -->🛠️ Tooling" },
+    { message = "^📄", group = "<!-- 6 -->📄 Documentation"},
+    { message = "^♻️", group = "<!-- 7 -->♻️ Refactors"},
+		{ message = "^👷", group = "<!-- 8 -->👷 Build/CI Improvements" },
+    { message = "^🎨", group = "<!-- 9 -->🎨 Styling"},
+    { message = "^🧪", group = "<!-- 10 -->🧪 Testing"},
+]
+
+[remote.github]
+owner = "justingrote"
+repo = "excelfast"
