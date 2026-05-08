@@ -31,6 +31,7 @@
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageVersion Include="SixLabors.Fonts" Version="1.0.1" />
 		<PackageReference Include="MiniExcel" Version="1.43.1" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.7" />
   </ItemGroup>
 
   <Target Name="CopyPsdAssets" AfterTargets="Publish">
