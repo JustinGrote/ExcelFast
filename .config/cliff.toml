@@ -1,6 +1,8 @@
 [changelog]
 # Adds the commit link for each type
 body = """
+## {{ version | default(value="Unreleased") }}
+
 {%- for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim }}
 {%- for commit in commits %}
@@ -10,9 +12,11 @@ body = """
 	| replace_regex(from="^(🚨|✨|🪳|📄|⚡|♻️|🎨|🧪|🛠️|⬆️|👷|♂️♂️){1,2}\\s*", to="")
 	| upper_first
 }} [{{ commit.id | truncate(length=7, end="") }}]
-{%- if commit_body != "" %}{{ "  " }}\n{{ commit_body | replace(from="\n", to="\n  ") }}{% endif %}
+{%- if commit_body != "" %}{{ "  " }}
+{{ commit_body | replace(from="\n", to="\n  ") }}{% endif %}
 {%- endfor %}
 {% endfor %}
+
 """
 
 [git]
