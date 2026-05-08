@@ -1,14 +1,17 @@
 [changelog]
 # Adds the commit link for each type
 body = """
-{% for group, commits in commits | group_by(attribute="group") %}
+{%- for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim }}
-{% for commit in commits %}
-- {{ commit.message
-	| replace_regex(from="^(🚨|✨|🪳|📄|⚡|♻️|🎨|🧪|🛠️|⬆️|👷|♂️|♂️){1,2}\\s*", to="")
+{%- for commit in commits %}
+{%- set commit_subject = commit.message | replace_regex(from="(?s)^([^\n]*).*", to="$1") %}
+{%- set commit_body = commit.message | replace_regex(from="(?s)^[^\n]*\n?(.*)$", to="$1") | trim %}
+- {{ commit_subject
+	| replace_regex(from="^(🚨|✨|🪳|📄|⚡|♻️|🎨|🧪|🛠️|⬆️|👷|♂️♂️){1,2}\\s*", to="")
 	| upper_first
-}} ([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/justingrote/excelfast/commit/{{ commit.id }}))
-{% endfor %}
+}} [{{ commit.id | truncate(length=7, end="") }}]
+{%- if commit_body != "" %}{{ "  " }}\n{{ commit_body | replace(from="\n", to="\n  ") }}{% endif %}
+{%- endfor %}
 {% endfor %}
 """
 
