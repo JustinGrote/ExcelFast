@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Threading;
 
+using ExcelFast.Extensions;
+
 using MiniExcelLibs;
 
 using static System.Management.Automation.PSSerializer;
@@ -48,6 +50,7 @@ public class ExportCommand : BaseCmdlet
 	// Collection "queue" to store data to be exported, allowing for concurrent processing
 	private readonly BlockingCollection<Dictionary<string, object>> exportQueue = [];
 	private readonly CancellationTokenSource exportCancellationTokenSource = new();
+	private bool _shouldExport = false;
 	private CancellationToken cancelToken
 	{
 		get
@@ -110,6 +113,7 @@ public class ExportCommand : BaseCmdlet
 			if (!ShouldProcess(providerPath, operation)) return;
 
 			// Update destination for processing
+			_shouldExport = true;
 			Destination = providerPath;
 		}
 		catch (Exception ex)
@@ -127,6 +131,7 @@ public class ExportCommand : BaseCmdlet
 	protected override void ProcessRecord()
 	{
 		AssertExportTaskNotFaulted();
+		if (!_shouldExport) return;
 		if (exportCancellationTokenSource.IsCancellationRequested)
 		{
 			return;
@@ -139,6 +144,8 @@ public class ExportCommand : BaseCmdlet
 
 	protected override void EndProcessing()
 	{
+		if (!_shouldExport) return;
+
 		if (exportTask is null) ProcessInputObjects();
 
 		exportQueue.CompleteAdding();
@@ -190,7 +197,7 @@ public class ExportCommand : BaseCmdlet
 				Debug($"Skipping null input object.");
 				return;
 			}
-			Dictionary<string, object> row = ConvertToDictionary(inputObject);
+			Dictionary<string, object> row = inputObject.ToFlatDictionary();
 			try
 			{
 				exportQueue.Add(row, cancelToken);
@@ -265,48 +272,6 @@ public class ExportCommand : BaseCmdlet
 				);
 			}
 		}
-	}
-
-	private Dictionary<string, object> ConvertToDictionary(PSObject inputObject)
-	{
-		PSObject cleanObject = new(Deserialize(Serialize(inputObject)));
-		if (TryConvertDictionary(cleanObject.BaseObject, out Dictionary<string, object> row))
-		{
-			return row;
-		}
-
-		// Last resort: wrap scalar value
-		row = [];
-		row["Value"] = cleanObject.BaseObject ?? string.Empty;
-		return row;
-	}
-
-	private static bool TryConvertDictionary(object? value, out Dictionary<string, object> row)
-	{
-		row = [];
-
-		if (value is not IDictionary dictionary)
-		{
-			return false;
-		}
-
-		foreach (DictionaryEntry entry in dictionary)
-		{
-			if (entry.Key is null)
-			{
-				continue;
-			}
-
-			string normalizedKey = entry.Key.ToString() ?? string.Empty;
-			if (string.IsNullOrWhiteSpace(normalizedKey))
-			{
-				continue;
-			}
-
-			row[normalizedKey] = entry.Value ?? string.Empty;
-		}
-
-		return true;
 	}
 
 	private Task<int[]> StartExporter() =>
