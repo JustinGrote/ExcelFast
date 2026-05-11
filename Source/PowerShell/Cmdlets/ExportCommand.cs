@@ -176,7 +176,7 @@ public class ExportCommand : BaseCmdlet
 				Thread.Sleep(100);
 			}
 			int[] result = exportTask.GetAwaiter().GetResult();
-			Debug($"Exported {result.Sum()} rows to '{Destination}'.");
+			Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
 		}
 		catch (OperationCanceledException)
 		{
