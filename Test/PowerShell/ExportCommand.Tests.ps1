@@ -175,8 +175,8 @@ user2,user2@example.com
 
 		It 'Should export an array of arrays as indexed IDictionary-style columns' {
 			$rows = @(
-				,[object[]]@('R1', 1, 'X')
-				,[object[]]@('R2', 2, 'Y')
+				[object[]]@('R1', 1, 'X')
+				[object[]]@('R2', 2, 'Y')
 			)
 
 			Export-Workbook -Destination $DestPath -InputObject $rows

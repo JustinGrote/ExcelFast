@@ -21,12 +21,13 @@ param(
 	[string]$PackagePath = (Split-Path $PublishPath -Parent)
 )
 
+$ErrorActionPreference = 'Stop'
+
 # This gets awkward in the context of the cast parameter so we do it here.
 if (-not $Version -and $ENV:MODULE_VERSION) {
 	$Version = $ENV:MODULE_VERSION
 }
 
-$ErrorActionPreference = 'Stop'
 
 #Clean the publish directory
 Write-Host -Fore Cyan "Cleaning publish directory: $PublishPath"
@@ -41,7 +42,7 @@ Write-Host -Fore Cyan 'Building Module'
 # Build the module
 try {
 	Push-Location -Path $PSScriptRoot
-	dotnet publish -c ($Production ? 'Release' : 'Debug') --version-suffix $($Production ? '' : 'dev')
+	dotnet publish -c ($Production ? 'Release' : 'Debug') --version-suffix $($Production ? '' : 'dev') -f net8.0, net472 -o (Join-Path $PSScriptRoot 'Artifacts\Module') -p:GenerateDocumentationFile=true
 
 	# Import the module to discover its commands and aliases
 	$manifestPath = Resolve-Path $ManifestPath
@@ -170,6 +171,8 @@ try {
 
 	#Package the nuget
 	Compress-PSResource -Path $PublishPath -DestinationPath $PackagePath
+
+	Remove-Item (Join-Path $PublishPath 'System*.dll') -Force
 
 	Write-Host "Module nupkg published to $PackagePath"
 

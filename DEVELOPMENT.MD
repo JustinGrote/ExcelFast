@@ -34,3 +34,7 @@ ExcelFast utilizes two separate C# libraries for Excel Manipulation:
 `ClosedXML`: Feature-Rich library for editing Excel files that powers Open/Save Workbook
 
 We must keep the separation distinct as their intents are different.
+
+## ALCLoader
+
+ExcelFast uses the [ALCLoader technique from Jordan Borean ](https://github.com/jborean93/PowerShell-ALC/blob/main/ALCLoader/README.md) to load dependencies, to avoid assembly conflicts in PS7.
