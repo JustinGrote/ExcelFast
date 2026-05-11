@@ -13,7 +13,7 @@ if (-not $IsCoreClr) {
 
 	# Create a redirect handler for our newer versions of certain system Libraries
 	$OnAssemblyResolve = [System.ResolveEventHandler] {
-		param($null, $assemblyToResolve)
+		param($sender, $assemblyToResolve)
 		# Check if this is the assembly causing the conflict
 		if ($assemblyToResolve) {
 			$assemblyName = $assemblyToResolve.Name.Split(',')[0]
