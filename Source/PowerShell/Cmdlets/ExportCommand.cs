@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Threading;
 
+using ExcelFast.Extensions;
+
 using MiniExcelLibs;
 
 using static System.Management.Automation.PSSerializer;
@@ -46,7 +48,7 @@ public class ExportCommand : BaseCmdlet
 	public SwitchParameter Force { get; set; }
 
 	// Collection "queue" to store data to be exported, allowing for concurrent processing
-	private readonly BlockingCollection<Dictionary<string, object>> exportQueue = [];
+	private readonly BlockingCollection<Dictionary<string, object>> exportQueue = new();
 	private readonly CancellationTokenSource exportCancellationTokenSource = new();
 	private CancellationToken cancelToken
 	{
@@ -59,6 +61,10 @@ public class ExportCommand : BaseCmdlet
 
 	// The running task to export data to Excel
 	private Task<int[]>? exportTask;
+
+	private bool whatIfSpecified = false;
+
+	private int rowsExported;
 
 	protected override void BeginProcessing()
 	{
@@ -101,13 +107,14 @@ public class ExportCommand : BaseCmdlet
 			}
 
 			string operation = destinationExists ? "Overwrite Workbook" : "Create Workbook";
+			whatIfSpecified = !ShouldProcess(providerPath, operation);
+			if (whatIfSpecified) return;
 
 			// Create directory if it doesn't exist
 			if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
 			{
 				Directory.CreateDirectory(directory);
 			}
-			if (!ShouldProcess(providerPath, operation)) return;
 
 			// Update destination for processing
 			Destination = providerPath;
@@ -141,6 +148,12 @@ public class ExportCommand : BaseCmdlet
 	{
 		if (exportTask is null) ProcessInputObjects();
 
+		if (whatIfSpecified)
+		{
+			Info($"What if: Would have written {rowsExported} rows to '{Destination}'", ["PSHOST"]);
+			return;
+		}
+
 		exportQueue.CompleteAdding();
 
 		if (exportTask is null)
@@ -163,7 +176,7 @@ public class ExportCommand : BaseCmdlet
 				Thread.Sleep(100);
 			}
 			int[] result = exportTask.GetAwaiter().GetResult();
-			Debug($"Export completed to {Destination} with result: {string.Join(", ", result)}");
+			Debug($"Exported {result.Sum()} rows to '{Destination}'.");
 		}
 		catch (OperationCanceledException)
 		{
@@ -190,10 +203,12 @@ public class ExportCommand : BaseCmdlet
 				Debug($"Skipping null input object.");
 				return;
 			}
-			Dictionary<string, object> row = ConvertToDictionary(inputObject);
+			Dictionary<string, object> row = inputObject.ToFlatDictionary();
 			try
 			{
-				exportQueue.Add(row, cancelToken);
+				if (!whatIfSpecified) exportQueue.Add(row, cancelToken);
+				rowsExported++;
+				if (whatIfSpecified) return;
 			}
 			catch (OperationCanceledException)
 			{
@@ -212,8 +227,6 @@ public class ExportCommand : BaseCmdlet
 			}
 		}
 	}
-
-
 
 	protected override void StopProcessing()
 	{
@@ -265,109 +278,6 @@ public class ExportCommand : BaseCmdlet
 				);
 			}
 		}
-	}
-
-	private Dictionary<string, object> ConvertToDictionary(PSObject inputObject)
-	{
-		if (TryConvertDictionary(inputObject.BaseObject, out Dictionary<string, object> row))
-		{
-			return row;
-		}
-
-		if (TryConvertEnumerable(inputObject.BaseObject, out row))
-		{
-			return row;
-		}
-
-		if (TryConvertProperties(inputObject, out row))
-		{
-			return row;
-		}
-
-		PSObject cleanObject = new(Deserialize(Serialize(inputObject)));
-		if (TryConvertDictionary(cleanObject.BaseObject, out row))
-		{
-			return row;
-		}
-
-		if (TryConvertEnumerable(cleanObject.BaseObject, out row))
-		{
-			return row;
-		}
-
-		if (TryConvertProperties(cleanObject, out row))
-		{
-			return row;
-		}
-
-		// Last resort: wrap scalar value
-		row = [];
-		row["Value"] = cleanObject.BaseObject ?? string.Empty;
-		return row;
-	}
-
-	private static bool TryConvertProperties(PSObject value, out Dictionary<string, object> row)
-	{
-		row = [];
-
-		foreach (PSPropertyInfo property in value.Properties)
-		{
-			if (string.IsNullOrWhiteSpace(property.Name))
-			{
-				continue;
-			}
-
-			row[property.Name] = property.Value ?? string.Empty;
-		}
-
-		return row.Count > 0;
-	}
-
-	private static bool TryConvertDictionary(object? value, out Dictionary<string, object> row)
-	{
-		row = [];
-
-		if (value is not IDictionary dictionary)
-		{
-			return false;
-		}
-
-		foreach (DictionaryEntry entry in dictionary)
-		{
-			if (entry.Key is null)
-			{
-				continue;
-			}
-
-			string normalizedKey = entry.Key.ToString() ?? string.Empty;
-			if (string.IsNullOrWhiteSpace(normalizedKey))
-			{
-				continue;
-			}
-
-			row[normalizedKey] = entry.Value ?? string.Empty;
-		}
-
-		return true;
-	}
-
-	private static bool TryConvertEnumerable(object? value, out Dictionary<string, object> row)
-	{
-		row = [];
-
-		if (value is null || value is string || value is IDictionary || value is not IEnumerable enumerable)
-		{
-			return false;
-		}
-
-		int index = 1;
-		foreach (object? item in enumerable)
-		{
-			row[$"Column{index}"] = item ?? string.Empty;
-			index++;
-		}
-
-		return row.Count > 0;
 	}
 
 	private Task<int[]> StartExporter() =>

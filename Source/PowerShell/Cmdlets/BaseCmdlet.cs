@@ -9,6 +9,8 @@ public abstract class BaseCmdlet : PSCmdlet
 	internal void Debug(string message) => WriteDebug($"{name}: {message}");
 	internal void Verbose(string message) => WriteVerbose($"{name}: {message}");
 	internal void Warning(string message) => WriteWarning($"{name}: {message}");
+	internal void Info(string message, string[]? tags = null) => WriteInformation($"{name}: {message}", tags);
+
 
 	internal void Error(
 			Exception exception,
