@@ -16,3 +16,7 @@ updates:
     prefix: ⬆️
     schedule:
       interval: weekly
+    groups:
+      nuget:
+        patterns:
+          - "*"
