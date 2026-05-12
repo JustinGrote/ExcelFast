@@ -44,7 +44,7 @@
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="PolySharp" Version="1.15.0" />
-    <PackageReference Include="Microsoft.BCL.AsyncInterfaces" Version="10.0.0" />
+    <PackageReference Include="Microsoft.BCL.AsyncInterfaces" Version="10.0.7" />
   </ItemGroup>
 
   <!-- <Target Name="CopyPsdAssets" AfterTargets="Publish">
