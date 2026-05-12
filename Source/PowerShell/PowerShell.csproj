@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>ExcelFast</AssemblyName>
     <RootNamespace>ExcelFast.PowerShell</RootNamespace>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net8.0;net472</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>14.0</LangVersion>
@@ -22,18 +22,33 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <!-- <PackageReference Include="System.Management.Automation" Version="7.4.0" ExcludeAssets="ContentFiles" PrivateAssets="All" /> -->
-    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="all" />
-    <PackageReference Include="PolySharp" Version="1.15.0" />
-    <!-- Needed for dynamic ienumerable support -->
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
-    <PackageVersion Include="SixLabors.Fonts" Version="1.0.1" />
+    <PackageReference Include="SixLabors.Fonts" Version="1.0.1" />
 		<PackageReference Include="MiniExcel" Version="1.43.1" />
+
+    <!--
+    Allows us to reference any type in our ALCLoader.Shared assembly. This can
+    provide a common set of classes we can exchange with PowerShell as it's
+    loaded in the default AppDomain.
+    -->
+    <ProjectReference Include="../ALCLoader/ALCLoader.csproj" />
   </ItemGroup>
 
-  <Target Name="CopyPsdAssets" AfterTargets="Publish">
+
+
+  <ItemGroup Label="PSCore" Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <PackageReference Include="System.Management.Automation" Version="7.4.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Label="PSDesktop" Condition="'$(TargetFramework)' == 'net472' ">
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="PolySharp" Version="1.15.0" />
+    <PackageReference Include="Microsoft.BCL.AsyncInterfaces" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- <Target Name="CopyPsdAssets" AfterTargets="Publish">
     <Copy SourceFiles="ExcelFast.psd1" DestinationFolder="$(PublishDir)" />
     <Copy SourceFiles="ExcelFast.Init.ps1" DestinationFolder="$(PublishDir)" />
     <CreateItem Include="Formats\*.ps1xml">
@@ -44,5 +59,5 @@
     <Copy SourceFiles="../../README.MD" DestinationFolder="$(PublishDir)" />
     <Copy SourceFiles="../../Docs/about_ExcelFast.help.txt" DestinationFolder="$(PublishDir)\en-US" />
     <Copy SourceFiles="../../THIRD-PARTY-NOTICES.TXT" DestinationFolder="$(PublishDir)" />
-  </Target>
+  </Target> -->
 </Project>

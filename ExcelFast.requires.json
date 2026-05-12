@@ -1,4 +1,6 @@
 [
 	"Microsoft.PowerShell.PlatyPS!>=1.0.0-0",
-	"Pester<6"
+	"Pester<6",
+	"Press<0.4.0",
+	"InvokeBuild<6"
 ]

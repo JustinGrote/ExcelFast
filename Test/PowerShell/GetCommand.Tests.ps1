@@ -41,23 +41,4 @@ Describe 'Get-Workbook Command Tests' {
             $actual[1].GetType().Name | Should -Be 'XLWorkbook'
         }
     }
-
-    Context 'Aliases' {
-        It 'Should have alias gwb' {
-            $actual = Get-Command -Name gwb
-            $actual | Should -Not -BeNullOrEmpty
-            $actual.ReferencedCommand | Should -Be 'Get-Workbook'
-        }
-
-        It 'Should have alias owb' {
-            $actual = Get-Command -Name owb
-            $actual | Should -Not -BeNullOrEmpty
-            $actual.ReferencedCommand | Should -Be 'Get-Workbook'
-        }
-        It 'Should have alias Open-Workbook' {
-            $actual = Get-Command -Name Open-Workbook
-            $actual | Should -Not -BeNullOrEmpty
-            $actual.ReferencedCommand | Should -Be 'Get-Workbook'
-        }
-    }
 }

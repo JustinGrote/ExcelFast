@@ -10,7 +10,7 @@
 		{
 			"label": "build",
 			"type": "shell",
-			"command": "./build.ps1",
+			"command": "Invoke-Build",
 			"group": {
 				"kind": "build",
 				"isDefault": true

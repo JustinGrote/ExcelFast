@@ -1,16 +1,16 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
-using System.Net.Http;
+using System.Net;
 
 public abstract class BaseCmdlet : PSCmdlet
 {
-	private static readonly HttpClient HttpClient = new();
-
 	protected string name => MyInvocation.MyCommand.Name;
 
 	internal void Debug(string message) => WriteDebug($"{name}: {message}");
 	internal void Verbose(string message) => WriteVerbose($"{name}: {message}");
 	internal void Warning(string message) => WriteWarning($"{name}: {message}");
+	internal void Info(string message, string[]? tags = null) => WriteInformation($"{name}: {message}", tags);
+
 
 	internal void Error(
 			Exception exception,
@@ -105,11 +105,14 @@ public abstract class BaseCmdlet : PSCmdlet
 
 			Debug($"Downloading workbook from '{uri}' to temporary file '{tempPath}'.");
 
-			using HttpRequestMessage request = new(HttpMethod.Get, uri);
-			using HttpResponseMessage response = HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
-			response.EnsureSuccessStatusCode();
+#pragma warning disable SYSLIB0014 // WebRequest is used for Windows PowerShell 5.1 compatibility.
+			HttpWebRequest request = WebRequest.CreateHttp(uri);
+			request.Method = "GET";
+#pragma warning restore SYSLIB0014
 
-			using Stream contentStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+			using HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+			using Stream contentStream = response.GetResponseStream()
+				?? throw new CmdletInvocationException($"No response stream returned when downloading '{uri}'.");
 			using FileStream outputStream = File.Create(tempPath);
 			contentStream.CopyTo(outputStream);
 
