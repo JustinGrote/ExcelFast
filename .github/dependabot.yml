@@ -6,11 +6,6 @@
 
 version: 2
 updates:
-  - package-ecosystem: "devcontainers"
-    directory: "/"
-    prefix: ⬆️
-    schedule:
-      interval: weekly
   - package-ecosystem: "nuget"
     directory: "/"
     prefix: ⬆️
@@ -18,5 +13,18 @@ updates:
       interval: weekly
     groups:
       nuget:
+        patterns:
+          - "*"
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    prefix: ⬆️
+    schedule:
+      interval: weekly
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      actions:
         patterns:
           - "*"
