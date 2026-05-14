@@ -6,5 +6,6 @@
   </Configurations>
   <Folder Name="/Source/">
     <Project Path="Source/PowerShell/PowerShell.csproj" />
+    <Project Path="Source/ALCLoader/ALCLoader.csproj" />
   </Folder>
 </Solution>
