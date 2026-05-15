@@ -71,14 +71,14 @@ jobs:
         }
     - name: 📈 Report Test Results
       uses: dorny/test-reporter@v2
-      if: !cancelled()
+      if: ${{ !cancelled() }}
       with:
         name: Pester Tests
         path: Artifacts/testResults.xml
         reporter: dotnet-nunit
     - name: 📈 Report Windows PowerShell Test Results
       uses: dorny/test-reporter@v2
-      if: runner.os == 'Windows' && !cancelled()
+      if: ${{ runner.os == 'Windows' && !cancelled() }}
       with:
         name: Pester Tests (Windows PowerShell)
         path: Artifacts/testResults-winps.xml
