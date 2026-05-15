@@ -54,14 +54,35 @@ jobs:
         $config.run.throw = $true
         $config.output.Verbosity = 'Detailed'
         $config.TestResult.Enabled = $true
-        $config.TestResult.OutputFormat = 'NUnitXml'
+        $config.TestResult.OutputPath = 'Artifacts/testResults.xml'
         Invoke-Pester -Configuration $config
-    # - name: 📈 Report Test Results
-    #   uses: dorny/test-reporter@v2
-    #   with:
-    #     name: Pester Tests
-    #     path: testResults.xml
-    #     reporter: dotnet-nunit
+    - name: 🧪 Test Windows PowerShell
+      if: runner.os == 'Windows'
+      run: |
+        powershell -c {
+          $mfModulePath = Join-Path $env:LOCALAPPDATA 'PowerShell\Modules'
+          $env:PSModulePath = "$mfModulePath;$env:PSModulePath"
+          $config = New-PesterConfiguration
+          $config.run.throw = $true
+          $config.output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = 'Artifacts/testResults-winps.xml'
+          Invoke-Pester -Configuration $config
+        }
+    - name: 📈 Report Test Results
+      uses: dorny/test-reporter@v2
+      if: !cancelled()
+      with:
+        name: Pester Tests
+        path: Artifacts/testResults.xml
+        reporter: dotnet-nunit
+    - name: 📈 Report Windows PowerShell Test Results
+      uses: dorny/test-reporter@v2
+      if: runner.os == 'Windows' && !cancelled()
+      with:
+        name: Pester Tests (Windows PowerShell)
+        path: Artifacts/testResults-winps.xml
+        reporter: dotnet-nunit
     - name: 📤 Upload Module Zip
       uses: actions/upload-artifact@v7
       with:

@@ -278,4 +278,4 @@ Task Pester-WinPS {
 
 Task CompileAll CompilePS7, CompilePS51
 Task Test Pester, Pester-WinPS
-Task . Clean, Build, Test
+Task . Clean, Build
