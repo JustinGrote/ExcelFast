@@ -256,5 +256,26 @@ Task Build CompileAll,CopyModuleFiles, {
 	}
 }
 
+Task Pester {
+	#Run in a separate job so as not to lock the assemblies
+	Start-Job -ScriptBlock { Invoke-Pester } | Receive-Job -Wait -AutoRemoveJob
+}
+
+Task Pester-WinPS {
+	if (-not $IsWindows) {
+		Write-Host -ForegroundColor Yellow 'Skipping Pester-WinPS: non-Windows platform detected.'
+		return
+	}
+	& powershell.exe -noprofile -c {
+		$pester = Get-Module -FullyQualified @{ModuleName = 'Pester'; ModuleVersion = '5.0' } -ListAvailable -EA 0
+		if (-not $pester) {
+			Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
+			Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop
+		}
+		Invoke-Pester
+	}
+}
+
 Task CompileAll CompilePS7, CompilePS51
-Task . Clean, Build
+Task Test Pester, Pester-WinPS
+Task . Clean, Build, Test
