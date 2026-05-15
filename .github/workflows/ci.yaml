@@ -56,6 +56,9 @@ jobs:
         $config.TestResult.Enabled = $true
         $config.TestResult.OutputPath = 'Artifacts/testResults.xml'
         Invoke-Pester -Configuration $config
+        if (-not (Test-Path 'Artifacts/testResults.xml')) {
+          throw "Test results file not found at Artifacts/testResults.xml"
+        }
     - name: 🧪 Test Windows PowerShell
       if: runner.os == 'Windows'
       run: |
@@ -69,20 +72,20 @@ jobs:
           $config.TestResult.OutputPath = 'Artifacts/testResults-winps.xml'
           Invoke-Pester -Configuration $config
         }
-    - name: 📈 Report Test Results
-      uses: dorny/test-reporter@v2
-      if: ${{ !cancelled() }}
-      with:
-        name: Pester Tests
-        path: Artifacts/testResults.xml
-        reporter: dotnet-nunit
-    - name: 📈 Report Windows PowerShell Test Results
-      uses: dorny/test-reporter@v2
-      if: ${{ runner.os == 'Windows' && !cancelled() }}
-      with:
-        name: Pester Tests (Windows PowerShell)
-        path: Artifacts/testResults-winps.xml
-        reporter: dotnet-nunit
+    # - name: 📈 Report Test Results
+    #   uses: dorny/test-reporter@v2
+    #   if: ${{ !cancelled() }}
+    #   with:
+    #     name: Pester Tests
+    #     path: Artifacts/testResults.xml
+    #     reporter: dotnet-nunit
+    # - name: 📈 Report Windows PowerShell Test Results
+    #   uses: dorny/test-reporter@v2
+    #   if: ${{ runner.os == 'Windows' && !cancelled() }}
+    #   with:
+    #     name: Pester Tests (Windows PowerShell)
+    #     path: Artifacts/testResults-winps.xml
+    #     reporter: dotnet-nunit
     - name: 📤 Upload Module Zip
       uses: actions/upload-artifact@v7
       with:
