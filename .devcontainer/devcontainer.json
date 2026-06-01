@@ -35,7 +35,8 @@
 	// }
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "dotnet restore && dotnet tool restore"
+	"postCreateCommand": "dotnet restore && dotnet tool restore",
+	"postStartCommand": "/usr/bin/pwsh -c 'iwr bit.ly/modulefast | iex;install-modulefast -verbose -debug';sudo chmod +x (command pwsh).Source"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
