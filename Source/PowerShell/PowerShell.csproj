@@ -24,7 +24,7 @@
     </PackageReference>
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="SixLabors.Fonts" Version="1.0.1" />
-		<PackageReference Include="MiniExcel" Version="1.43.1" />
+		<PackageReference Include="MiniExcel" Version="1.44.1" />
 
     <!--
     Allows us to reference any type in our ALCLoader.Shared assembly. This can
