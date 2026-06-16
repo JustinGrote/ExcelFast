@@ -51,18 +51,18 @@ jobs:
         }
     - name: 🧪 Test
       run: |
-        $config = New-PesterConfiguration
-        $config.run.throw = $true
-        $config.output.Verbosity = 'Detailed'
-        $config.TestResult.Enabled = $true
-        $config.TestResult.OutputFormat = 'NUnitXml'
-        Invoke-Pester -Configuration $config
-    # - name: 📈 Report Test Results
-    #   uses: dorny/test-reporter@v2
-    #   with:
-    #     name: Pester Tests
-    #     path: testResults.xml
-    #     reporter: dotnet-nunit
+        try {Invoke-Build Test}
+        catch {
+          "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
+          throw
+        }
+    - name: 🧪 Test - WinPS
+      run: |
+        try {Invoke-Build Test-WinPS}
+        catch {
+          "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
+          throw
+        }
     - name: 📤 Upload Module Zip
       uses: actions/upload-artifact@v7
       with:
