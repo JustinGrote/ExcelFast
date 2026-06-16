@@ -193,7 +193,16 @@ public class ExportCommand : TaskCmdlet
         continue;
       }
 
-      Dictionary<string, object> row = inputObject.ToFlatDictionary();
+      Exec(() =>
+      {
+        var row = inputObject.ToFlatDictionary();
+#if NET472
+        exportQueue.Add(row, PipelineStopToken);
+#else
+        exportQueue.Writer.TryWrite(row);
+#endif
+      });
+
       try
       {
         rowsExported++;
@@ -202,11 +211,6 @@ public class ExportCommand : TaskCmdlet
           continue;
         }
 
-#if NET472
-        exportQueue.Add(row, PipelineStopToken);
-#else
-        await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
-#endif
         StartExportTaskIfNeeded();
       }
       catch (OperationCanceledException)

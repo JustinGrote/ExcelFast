@@ -11,6 +11,12 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
   protected virtual Task End() => Task.CompletedTask;
   protected virtual Task Clean() => Task.CompletedTask;
 
+  // Hooks we can run against the main thread before we start the async pipeline. This can be useful to
+  protected virtual void BeginSync() { }
+  protected virtual void ProcessSync() { }
+  protected virtual void EndSync() { }
+  protected virtual void CleanSync() { }
+
   /// <summary>
   /// Queues output for the cmdlet pipeline. This is the primary method used to send data through the async pipeline,
   /// and the other output helpers build on top of it.
@@ -23,6 +29,11 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
     }
     _output.Add(new(item, raw), cancelToken ?? PipelineStopToken);
   }
+
+  /// <summary>
+  /// Queues an action to be executed on the main thread of the cmdlet. This is useful for evaluating script properties, etc. that need to be run on the main thread to avoid marshalling issues. Note that there is no direct way to return results, you should use a concurrent collection or similar to pass results back from the action if needed.
+  /// </summary>
+  internal void Exec(Action action) => AddOutput(new MainAction(action));
 
   /// <summary>
   /// Buffers output from asynchronous pipeline steps on separate threads before writing it to the pipeline.
@@ -82,8 +93,11 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
   /// <summary>
   /// Executes an asynchronous cmdlet step and routes its output and errors through the PowerShell pipeline.
   /// </summary>
-  private void ExecuteAsyncPipelineStep(Func<Task> cmdletMethod)
+  private void ExecuteAsyncPipelineStep(Func<Task> cmdletMethod, Action? syncMethod = null)
   {
+    // Run our synchronous pre-step hook to allow the derived class to set up any necessary state before we initialize the output collection and start processing output
+    syncMethod?.Invoke();
+
     _output = [];
     var task = Task.Run(async () =>
     {
@@ -155,6 +169,10 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
         break;
       case ProgressRecord progressRecord:
         base.WriteProgress(progressRecord);
+        break;
+      case MainAction mainAction:
+        // Run an item on the thread where the cmdlet was executed. This is needed to evaluate scriptproperties, etc.
+        mainAction.action();
         break;
       default:
         base.WriteObject(item);
@@ -404,3 +422,5 @@ internal record ShouldProcessCustomPrompt(
     TaskCompletionSource<bool> Response
 );
 internal record TerminatingError(ErrorRecord Error);
+/** Send this via the pipeline to execute an action on the main thread **/
+internal record MainAction(Action action);
