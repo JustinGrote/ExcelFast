@@ -2,6 +2,8 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 using System.Text.RegularExpressions;
 
+using ExcelFast.Extensions;
+
 using static ExcelFast.SystemConstants;
 
 using ClosedXML.Excel;
@@ -14,7 +16,7 @@ using FilePath = Path;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [Alias("iwb")]
-public class ImportCommand : BaseCmdlet
+public class ImportCommand : BetterPSCmdlet
 {
 	[Parameter(
 		Position = 0,
@@ -81,17 +83,17 @@ public class ImportCommand : BaseCmdlet
 	readonly HashSet<ICollection<string>> columnSets = [];
 	private const string ImportedPSTypeName = "ExcelFast.ImportedWorkbook";
 
-	protected override void ProcessRecord()
-	{
-		switch (ParameterSetName)
-		{
-			case nameof(Path):
-				// Path is already set from parameter binding, no action needed.
-				break;
-			case nameof(Workbook):
-				Path = [GetWorkbookPath(Workbook!)];
-				break;
-			case nameof(Range):
+  protected override void ProcessRecord()
+  {
+    switch (ParameterSetName)
+    {
+      case nameof(Path):
+        // Path is already set from parameter binding, no action needed.
+        break;
+      case nameof(Workbook):
+        Path = [GetWorkbookPath(Workbook!)];
+        break;
+      case nameof(Range):
 				Path = [GetWorkbookPath(Range!.Worksheet.Workbook)];
 				SheetName = [Range.Worksheet.Name];
 				StartCell = Range.RangeAddress.FirstAddress.ToStringRelative();
@@ -117,13 +119,13 @@ public class ImportCommand : BaseCmdlet
 		string providerPath;
 		try
 		{
-			providerPath = ResolveWorkbookPath(workbookPath, out tempPath);
-		}
-		catch (Exception ex)
-		{
-			Error(
-				ex,
-				"Check the URL and verify the remote file is reachable.",
+      providerPath = this.ResolveWorkbookPath(workbookPath, out tempPath);
+    }
+    catch (Exception ex)
+    {
+      Error(
+        ex,
+        "Check the URL and verify the remote file is reachable.",
 				"RemoteFileDownloadFailed",
 				workbookPath
 			);
@@ -164,14 +166,14 @@ public class ImportCommand : BaseCmdlet
 			if (SheetName == null || SheetName.Length == 0)
 			{
 				Debug($"No sheet name provided. Importing the first sheet from '{providerPath}'.");
-				sheetNamesToImport = [availableSheetNames.FirstOrDefault()];
-			}
-			else
-			{
-				IReadOnlyCollection<string> missingSheetNames =
-				[
-					.. SheetName.Where(sheetName => !availableSheetNames.Contains(sheetName, StringComparer.OrdinalIgnoreCase))
-				];
+        sheetNamesToImport = [availableSheetNames.FirstOrDefault() ?? "Sheet1"];
+      }
+      else
+      {
+        IReadOnlyCollection<string> missingSheetNames =
+        [
+          .. SheetName.Where(sheetName => !availableSheetNames.Contains(sheetName, StringComparer.OrdinalIgnoreCase))
+        ];
 
 				if (missingSheetNames.Count > 0)
 				{
