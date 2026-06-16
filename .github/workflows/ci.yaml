@@ -16,7 +16,7 @@ defaults:
 jobs:
   build:
     name: 👷 Build
-    runs-on: ubuntu-24.04
+    runs-on: windows-2025
     outputs:
       nupkg_artifact_id: ${{ steps.upload_nupkg.outputs.artifact-id }}
     steps:
