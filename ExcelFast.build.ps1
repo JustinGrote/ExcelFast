@@ -25,6 +25,11 @@ param(
 	[switch]$SkipPS51
 )
 
+
+if ($ENV:CI -or $ENV:GITHUB_ACTIONS) {
+
+}
+
 Set-BuildHeader {
 	param($Path)
 	"👷 $Path $(Get-BuildSynopsis $Task)"
@@ -263,7 +268,14 @@ Task Docs Build, {
 
 Task Pester {
   #Run in a separate job so as not to lock the assemblies
-  Start-Job -ScriptBlock { Invoke-Pester } | Receive-Job -Wait -AutoRemoveJob
+  Start-Job -ScriptBlock {
+    $config = New-PesterConfiguration
+    $config.run.throw = $true
+    $config.output.Verbosity = 'Detailed'
+    $config.TestResult.Enabled = $true
+    $config.TestResult.OutputFormat = 'NUnitXml'
+    Invoke-Pester -Configuration $config
+  } | Receive-Job -Wait -AutoRemoveJob
 }
 
 Task Pester-WinPS {
@@ -277,7 +289,12 @@ Task Pester-WinPS {
       Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
       Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop
     }
-    Invoke-Pester
+    $config = New-PesterConfiguration
+    $config.run.throw = $true
+    $config.output.Verbosity = 'Detailed'
+    $config.TestResult.Enabled = $true
+    $config.TestResult.OutputFormat = 'NUnitXml'
+    Invoke-Pester -Configuration $config
   }
 }
 
