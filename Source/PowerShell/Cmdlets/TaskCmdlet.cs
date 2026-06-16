@@ -64,7 +64,6 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
 
   protected virtual void Dispose(bool disposing)
   {
-    System.Console.WriteLine("DEBUG: Dispose called with disposing = " + disposing);
     if (_disposed)
     {
       return;
@@ -92,11 +91,9 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
       {
         await cmdletMethod();
         methodCounter++;
-        System.Console.WriteLine($"DEBUG: Completed {cmdletMethod.Method.Name} ({methodCounter}) without exception.");
       }
       catch (Exception ex)
       {
-        System.Console.WriteLine($"DEBUG: Unhandled Exception in {cmdletMethod.Method.Name}: {ex}");
         // Handle exceptions by writing them to the error stream
         Error(ex, terminating: true);
       }
@@ -248,16 +245,13 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
       }
     };
 
-    System.Console.WriteLine($"DEBUGTEST: Created ErrorRecord with message: {error.ErrorDetails.Message} and recommended action: {error.ErrorDetails.RecommendedAction}");
 
     if (terminating)
     {
-      System.Console.WriteLine($"DEBUGTEST: Throwing terminating error.");
       AddOutput(new TerminatingError(error));
     }
     else
     {
-      System.Console.WriteLine($"DEBUGTEST: Writing non-terminating error.");
       WriteError(error);
     }
   }

@@ -116,7 +116,6 @@ public class ExportCommand : TaskCmdlet
 
   protected override async Task End()
   {
-    System.Console.WriteLine("DEBUGTEST: Start End. Export task is " + (exportTask is null ? "null" : exportTask.Status.ToString()));
 
     if (exportTask is null) await ProcessInputObjects();
 
@@ -139,18 +138,15 @@ public class ExportCommand : TaskCmdlet
 
     try
     {
-      System.Console.WriteLine("DEBUGTEST: Nothing further to queue. Closing Export Queue.");
 #if NET472
       exportQueue.CompleteAdding();
 #else
       exportQueue.Writer.TryComplete();
 #endif
-      System.Console.WriteLine("DEBUGTEST: Waiting for export task to complete.");
 
       Debug("Waiting for export task to complete.");
 
       int[] result = await exportTask;
-      System.Console.WriteLine("DEBUGTEST: Waiting for export task to complete.");
 
       Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
     }
@@ -160,7 +156,6 @@ public class ExportCommand : TaskCmdlet
     }
     catch (Exception ex)
     {
-      System.Console.WriteLine($"DEBUGTEST: Exception in export task: {ex}");
       Error(
         ex,
         "An error occurred during export. See exception details for more information.",
@@ -204,13 +199,11 @@ public class ExportCommand : TaskCmdlet
       // We dont want to start the SaveAsAsync task until we have at least one row to export, to avoid creating an empty file if the input is empty
       if (exportTask is null)
       {
-        System.Console.WriteLine("DEBUGTEST: Getting Enumerable");
 #if NET472
   var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
 #else
         var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
 #endif
-        System.Console.WriteLine("DEBUGTEST: Starting export task.");
 
         // Start the export task immediately to begin streaming
         Debug("Starting MiniExcel export task.");
@@ -223,7 +216,6 @@ public class ExportCommand : TaskCmdlet
           overwriteFile: Force.IsPresent,
           cancellationToken: PipelineStopToken
         ));
-        System.Console.WriteLine("DEBUGTEST: Export task started.");
 
       }
     }
@@ -231,7 +223,6 @@ public class ExportCommand : TaskCmdlet
 
   protected override async Task Clean()
   {
-    System.Console.WriteLine("DEBUG: Clean called, initiating cancellation and cleanup of export task.");
     Debug("Stopping export process due to pipeline stop request.");
 #if NET472
     exportQueue.CompleteAdding();
