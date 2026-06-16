@@ -15,35 +15,40 @@ using FilePath = Path;
 public class ExportCommand : TaskCmdlet
 {
 	[Parameter(
-			Mandatory = true,
-			Position = 0,
-			ValueFromPipelineByPropertyName = true,
-			HelpMessage = "Path to the Excel file to export to."
-	)]
-	[ValidateNotNullOrEmpty]
-	[NotNull]
-	public string? Destination { get; set; }
+    Mandatory = true,
+    Position = 0,
+    ValueFromPipelineByPropertyName = true,
+    HelpMessage = "Path to the Excel file to export to."
+  )]
+  [ValidateNotNullOrEmpty]
+  [NotNull]
+  public string? Destination { get; set; }
 
-	[Parameter(
-			Mandatory = true,
-			Position = 1,
-			ValueFromPipeline = true,
-			HelpMessage = "Objects to export to the Excel file."
-	)]
-	[ValidateNotNull]
-	[NotNull]
-	public PSObject[]? InputObject { get; set; }
+  [Parameter(
+    Mandatory = true,
+    Position = 1,
+    ValueFromPipeline = true,
+    HelpMessage = "Objects to export to the Excel file."
+  )]
+  [ValidateNotNull]
+  [NotNull]
+  public PSObject[]? InputObject { get; set; }
 
-	[Parameter(
-			HelpMessage = "Name of the sheet to export to. If not specified, exports to 'Sheet1'."
-	)]
-	[ValidateNotNullOrEmpty]
-	public string SheetName { get; set; } = "Sheet1";
+  [Parameter(
+    HelpMessage = "Name of the sheet to export to. If not specified, exports to 'Sheet1'."
+  )]
+  [ValidateNotNullOrEmpty]
+  public string SheetName { get; set; } = "Sheet1";
 
-	[Parameter(
-			HelpMessage = "Forces overwriting of the destination file if it already exists."
-	)]
-	public SwitchParameter Force { get; set; }
+  [Parameter(
+    HelpMessage = "Forces overwriting of the destination file if it already exists."
+  )]
+  public SwitchParameter Force { get; set; }
+
+  [Parameter(
+    HelpMessage = "Bounded queue capacity used to stream rows to the Excel writer. Larger values reduce producer stalls for large exports."
+  )]
+  public int InputQueueSize { get; set; } = 1024;
 
   // The running task to export data to Excel
   private Task<int[]>? exportTask;
@@ -53,11 +58,19 @@ public class ExportCommand : TaskCmdlet
   private int rowsExported;
 
 #if NET472
-  private readonly BlockingCollection<Dictionary<string, object>> exportQueue = [];
+  private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
 #else
-  private readonly Channel<Dictionary<string, object>> exportQueue
-    = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(1));
+  private readonly Channel<Dictionary<string, object>> exportQueue;
 #endif
+
+  public ExportCommand()
+  {
+#if NET472
+    exportQueue = [];
+#else
+    exportQueue = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(InputQueueSize));
+#endif
+  }
 
   protected override async Task Begin()
   {
@@ -117,7 +130,10 @@ public class ExportCommand : TaskCmdlet
   protected override async Task End()
   {
 
-    if (exportTask is null) await ProcessInputObjects();
+    if (exportTask is null)
+    {
+      await ProcessInputObjects();
+    }
 
     if (whatIfSpecified)
     {
@@ -127,12 +143,7 @@ public class ExportCommand : TaskCmdlet
 
     if (exportTask is null)
     {
-      Error(
-        new InvalidOperationException("Export task was not initialized."),
-        "This is probably a bug, please report it.",
-        "ExportTaskNotInitialized",
-        terminating: true
-      );
+      Verbose($"No rows were exported to '{Destination}'.");
       return;
     }
 
@@ -168,57 +179,67 @@ public class ExportCommand : TaskCmdlet
 
   private async Task ProcessInputObjects()
   {
+    if (InputObject is null || InputObject.Length == 0)
+    {
+      Debug("No rows were supplied for export.");
+      return;
+    }
+
     foreach (PSObject inputObject in InputObject)
     {
       if (inputObject is null)
       {
-        Debug($"Skipping null input object.");
-        return;
+        Debug("Skipping null input object.");
+        continue;
       }
+
       Dictionary<string, object> row = inputObject.ToFlatDictionary();
       try
       {
         rowsExported++;
-        // Dont actually do any work if we are just testing with -WhatIf, but we still want to count the rows for accurate reporting
-        if (whatIfSpecified) return;
+        if (whatIfSpecified)
+        {
+          continue;
+        }
 
 #if NET472
         exportQueue.Add(row, PipelineStopToken);
 #else
         await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
 #endif
+        StartExportTaskIfNeeded();
       }
       catch (OperationCanceledException)
       {
         Debug("Export row enqueue canceled.");
         return;
       }
+    }
+  }
 
+  private void StartExportTaskIfNeeded()
+  {
+    if (exportTask is not null)
+    {
+      return;
+    }
 
-
-      // We dont want to start the SaveAsAsync task until we have at least one row to export, to avoid creating an empty file if the input is empty
-      if (exportTask is null)
-      {
 #if NET472
-  var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
+    var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
 #else
-        var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
+    var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
 #endif
 
-        // Start the export task immediately to begin streaming
-        Debug("Starting MiniExcel export task.");
+    Debug("Starting MiniExcel export task.");
 
-        exportTask = Task.Run(async () => await MiniExcel.SaveAsAsync(
-          Destination,
-          queue,
-          sheetName: SheetName,
-          excelType: ExcelType.XLSX,
-          overwriteFile: Force.IsPresent,
-          cancellationToken: PipelineStopToken
-        ));
-
-      }
-    }
+    exportTask = Task.Run(async () => await MiniExcel.SaveAsAsync(
+      Destination,
+      queue,
+      sheetName: SheetName,
+      excelType: ExcelType.XLSX,
+      overwriteFile: Force.IsPresent,
+      cancellationToken: PipelineStopToken
+    ), PipelineStopToken);
   }
 
   protected override async Task Clean()
