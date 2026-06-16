@@ -4,7 +4,7 @@ using ClosedXML.Excel;
 
 [Cmdlet(VerbsData.Save, CmdletDefaultName)]
 [Alias("svwb")]
-public class SaveCommand : BaseCmdlet
+public class SaveCommand : BetterPSCmdlet
 {
 	[Parameter(
 					Mandatory = true,

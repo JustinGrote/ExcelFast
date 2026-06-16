@@ -47,7 +47,7 @@ Task Clean {
 	$env:GIT_ASK_YESNO = 'false'
 	git clean -fdx --no-interactive -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
 	if ($LASTEXITCODE -ne 0) {
-		throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked"
+    throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked. Is the module loaded in a running PowerShell window?"
 	}
 }
 
@@ -103,179 +103,184 @@ Task CopyModuleFiles {
 	Copy-Item -Path (Join-Path $sourcePath '*') -Destination $PublishPath -Force -Recurse
 }
 
-Task Build CompileAll,CopyModuleFiles, {
-	[SemanticVersion]$Version = $Version
-	try {
-		Push-Location -Path $PSScriptRoot
+Task Build CompileAll, CopyModuleFiles, {
+  [SemanticVersion]$BuildVersion = $Version
+  try {
+    Push-Location -Path $PSScriptRoot
 
-		# Import the module to discover its commands and aliases
-		$manifestPath = Resolve-Path $ManifestPath
+    # Import the module to discover its commands and aliases
+    $manifestPath = Resolve-Path $ManifestPath
 
-		#HACK: Because importing the module loads the .NET assemblies and locks them to the session, we want it in a separate process.
-		$job = Start-Job -ArgumentList $ManifestPath, $ModuleName -ScriptBlock {
-			param(
-				[string]$ManifestPath,
-				[string]$ModuleName
-			)
+    #HACK: Because importing the module loads the .NET assemblies and locks them to the session, we want it in a separate process.
+    $job = Start-Job -ArgumentList $ManifestPath, $ModuleName -ScriptBlock {
+      param(
+        [string]$ManifestPath,
+        [string]$ModuleName
+      )
 
-			Import-Module -Name $ManifestPath -Force
+      Import-Module -Name $ManifestPath -Force
 
-			return @{
-				CmdletsToExport = (Get-Command -CommandType Cmdlet -Module $ModuleName).Name
-				AliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
-			}
-		}
+      return @{
+        CmdletsToExport = (Get-Command -CommandType Cmdlet -Module $ModuleName).Name
+        AliasesToExport = (Get-Alias | Where-Object { $_.ResolvedCommand.Module.Name -eq $ModuleName }).Name
+      }
+    }
 
-		$jobOutput = Receive-Job -Job $job -Wait -AutoRemoveJob
-		$cmdletsToExport = $jobOutput.CmdletsToExport
-		$aliasesToExport = $jobOutput.AliasesToExport
+    $jobOutput = Receive-Job -Job $job -Wait -AutoRemoveJob
+    $cmdletsToExport = $jobOutput.CmdletsToExport
+    $aliasesToExport = $jobOutput.AliasesToExport
 
-		if ($null -eq $Version) {
-			# If this is a tagged build, use the version from the tag
-			[SemanticVersion[]]$tag = git tag --points-at HEAD
-			| ForEach-Object {
-				try {
-					[SemanticVersion]($_ -replace '^v')
-				} catch {
-					Write-Verbose -Fore Yellow "Tag '$_' is not a valid semantic version. Skipping."
-				}
-			}
-			| Sort-Object -Descending
+    if ($null -eq $BuildVersion) {
+      # If this is a tagged build, use the version from the tag
+      [SemanticVersion[]]$tag = git tag --points-at HEAD
+      | ForEach-Object {
+        try {
+          [SemanticVersion]($_ -replace '^v')
+        } catch {
+          Write-Verbose -Fore Yellow "Tag '$_' is not a valid semantic version. Skipping."
+        }
+      }
+      | Sort-Object -Descending
 
-			if ($tag.Count -ge 1) {
-				if ($tag.Count -gt 1) {
-					Write-Warning "Multiple version tags ($($tag -join ', ')) found pointing to HEAD. Will build for the highest version found ($($tag[0]))."
-				}
-				$selectedTag = $tag[0]
-				Write-Host -Fore Green "Using version from tag: $selectedTag"
-				$Version = $selectedTag
-			} else {
-				Write-Host -Fore Yellow 'No tag found. Using GitVersion to determine the version.'
-				# Get the module verison
-				dotnet tool restore
-				$versionInfo = dotnet gitversion | ConvertFrom-Json
+      if ($tag.Count -ge 1) {
+        if ($tag.Count -gt 1) {
+          Write-Warning "Multiple version tags ($($tag -join ', ')) found pointing to HEAD. Will build for the highest version found ($($tag[0]))."
+        }
+        $selectedTag = $tag[0]
+        Write-Host -Fore Green "Using version from tag: $selectedTag"
+        $BuildVersion = $selectedTag
+      } else {
+        Write-Host -Fore Yellow 'No tag found. Using GitVersion to determine the version.'
+        # Get the module verison
+        dotnet tool restore
+        $versionInfo = dotnet gitversion | ConvertFrom-Json
 
-				# Update the module version in the manifest
-				$moduleVersion = $versionInfo.MajorMinorPatch
+        # Update the module version in the manifest
+        $moduleVersion = $versionInfo.MajorMinorPatch
 
-				# If this is running in Github Actions, use the run id and attempt ID as the prereleasenumber
-				if ($env:GITHUB_RUN_NUMBER -and $env:GITHUB_RUN_ATTEMPT) {
-					$runId = ([int]$env:GITHUB_RUN_NUMBER).ToString('D3')
-					$attemptId = ([int]$env:GITHUB_RUN_ATTEMPT).ToString('D3')
+        # If this is running in Github Actions, use the run id and attempt ID as the prereleasenumber
+        if ($env:GITHUB_RUN_NUMBER -and $env:GITHUB_RUN_ATTEMPT) {
+          $runId = ([int]$env:GITHUB_RUN_NUMBER).ToString('D3')
+          $attemptId = ([int]$env:GITHUB_RUN_ATTEMPT).ToString('D3')
 
-					$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $runId + '.' + $attemptId + '.' + $versionInfo.ShortSha
-				} else {
-					# Otherwise, use the short sha as the prereleasenumber
-					$modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $versionInfo.ShortSha
-				}
+          $modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $runId + '.' + $attemptId + '.' + $versionInfo.ShortSha
+        } else {
+          # Otherwise, use the short sha as the prereleasenumber
+          $modulePrerelease = 'ci-' + $versionInfo.PreReleaseNumber.ToString('D3') + '+' + $versionInfo.ShortSha
+        }
 
-				$Version = $moduleVersion + '-' + $modulePrerelease
-			}
-		}
+        $BuildVersion = $moduleVersion + '-' + $modulePrerelease
+      }
+    }
 
-		Write-Host -Fore Cyan "Module Version: $Version"
+    Write-Host -Fore Cyan "Module Version: $BuildVersion"
 
-		Write-Host -Fore Cyan "Updating module manifest '$manifestPath' with cmdlets aliases and types"
-		$formatAndTypeSourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Module\Formats'
-		if (Test-Path $formatAndTypeSourcePath) {
-			[string[]]$formatsToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.format.ps1xml' -File
-			| ForEach-Object { Join-Path 'Formats' $_.Name }
+    Write-Host -Fore Cyan "Updating module manifest '$manifestPath' with cmdlets aliases and types"
+    $formatAndTypeSourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Module\Formats'
+    if (Test-Path $formatAndTypeSourcePath) {
+      [string[]]$formatsToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.format.ps1xml' -File
+      | ForEach-Object { Join-Path 'Formats' $_.Name }
 
-			[string[]]$typesToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.types.ps1xml' -File
-			| ForEach-Object { Join-Path 'Formats' $_.Name }
-		}
+      [string[]]$typesToProcess = Get-ChildItem -Path $formatAndTypeSourcePath -Filter '*.types.ps1xml' -File
+      | ForEach-Object { Join-Path 'Formats' $_.Name }
+    }
 
-		# Update the module manifest
-		$updateModuleManifestSplat = @{
-			Path            = $manifestPath
-			CmdletsToExport = $cmdletsToExport
-			AliasesToExport = $aliasesToExport
-			FormatsToProcess = $formatsToProcess
-			TypesToProcess   = $typesToProcess
-			#Version becomes Version#WithLabel when cast from semantic version, hence the psbase work
-			ModuleVersion   = [version]$version
-			Prerelease      = 'PRERELEASEPLACEHOLDER'
-		}
-		Update-ModuleManifest @updateModuleManifestSplat
+    # Update the module manifest
+    $updateModuleManifestSplat = @{
+      Path             = $manifestPath
+      CmdletsToExport  = $cmdletsToExport
+      AliasesToExport  = $aliasesToExport
+      FormatsToProcess = $formatsToProcess
+      TypesToProcess   = $typesToProcess
+      #Version becomes Version#WithLabel when cast from semantic version, hence the psbase work
+      ModuleVersion    = [version]$BuildVersion
+      Prerelease       = 'PRERELEASEPLACEHOLDER'
+    }
+    Update-ModuleManifest @updateModuleManifestSplat
 
-		#BUG: Update-ModuleManifest does not support build characters in the version string, hence this workaround.
-		$manifestContent = Get-Content -Path $manifestPath -Raw
-		$manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $Version.PreReleaseLabel
-		Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
+    #BUG: Update-ModuleManifest does not support build characters in the version string, hence this workaround.
+    $manifestContent = Get-Content -Path $manifestPath -Raw
+    $manifestContent = $manifestContent -replace 'PRERELEASEPLACEHOLDER', $BuildVersion.PreReleaseLabel
+    Set-Content -Path $manifestPath -Value $manifestContent -NoNewline
 
-		#HACK: Because PlatyPS loads the .NET assemblies and locks them to the session, we want it in a separate process.
-		Write-Host -Fore Cyan "Exporting MAML help to $PublishPath"
-		[version]$helpVersion = $Version
-		Start-Job -ArgumentList $ManifestPath, $PublishPath, "$PSScriptRoot/Docs/Commands", $helpVersion -ScriptBlock {
-			#requires -Modules @{ModuleName='Microsoft.PowerShell.Platyps'; ModuleVersion='1.0.0'}
+    #Package the nuget
+    Compress-PSResource -Path $PublishPath -DestinationPath $PackagePath
 
-			param(
-				[string]$ManifestPath,
-				[string]$PublishPath,
-				[string]$DocsPath,
-				[version]$HelpVersion
-			)
-			Write-Host -Fore Cyan "Exporting MAML help to $PublishPath from job with manifest path: $ManifestPath and help version: $HelpVersion"
-			$newMarkdownCommandHelpSplat = @{
-				ModuleInfo                  = (Import-Module $ManifestPath -Force -PassThru)
-				OutputFolder                = $DocsPath
-				HelpVersion                 = $HelpVersion
-				WithModulePage              = $true
-				AbbreviateParameterTypeName = $true
-				# Ignore warnings about existing markdown files
-				WarningAction               = 'SilentlyContinue'
-			}
+    Remove-Item (Join-Path $PublishPath 'System*.dll') -Force
 
-			#Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
-			Write-Host -Fore Cyan "Generating markdown command help for new or changed commands. Output folder: $($newMarkdownCommandHelpSplat.OutputFolder)"
-			New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
+    Write-Host "Module nupkg published to $PackagePath"
+    $SCRIPT:Version = $BuildVersion
 
-			Get-ChildItem -Recurse -Path $newMarkdownCommandHelpSplat.OutputFolder -Include '*.md'
-			| Measure-PlatyPSMarkdown
-			| Where-Object FileType -Match 'CommandHelp'
-			| Import-MarkdownCommandHelp -Path { $_.FilePath }
-			| Export-MamlCommandHelp -OutputFolder $PublishPath -Force
-		}
-		| Receive-Job -Wait -AutoRemoveJob
+  } finally {
+    # Return to the original location
+    Pop-Location
+  }
+}
 
-		#HACK: PlatyPS exports the help files to a subfolder named after the module, but to work properly it needs to be in a subfolder named after the culture (en-US). Hence this workaround.
-		New-Item -ItemType Directory -Force (Join-Path $PublishPath 'en-US') | Out-Null
-		Move-Item (Join-Path $PublishPath 'ExcelFast' '*.xml') (Join-Path $PublishPath 'en-US')
-		Remove-Item (Join-Path $PublishPath 'ExcelFast') -Recurse | Out-Null
+Task Docs Build, {
+  # Use only the numeric version for PlatyPS help generation; prerelease labels are not valid for [version].
+  $helpVersion = [version](([string]$Version) -replace '[-+].*', '')
 
-		#Package the nuget
-		Compress-PSResource -Path $PublishPath -DestinationPath $PackagePath
+  #HACK: Because PlatyPS loads the .NET assemblies and locks them to the session, we want it in a separate process.
+  Write-Host -Fore Cyan "Exporting MAML help for $ManifestPath to $PublishPath with version $helpVersion."
+  Start-Job -ArgumentList $ManifestPath, $PublishPath, (Join-Path $PSScriptRoot 'Docs/Commands'), $helpVersion -ScriptBlock {
+    #requires -Modules @{ModuleName='Microsoft.PowerShell.Platyps'; ModuleVersion='1.0.0'}
 
-		Remove-Item (Join-Path $PublishPath 'System*.dll') -Force
+    param(
+      [string]$ManifestPath,
+      [string]$PublishPath,
+      [string]$DocsPath,
+      [version]$HelpVersion
+    )
+    Write-Host -Fore Cyan "Exporting MAML help to $PublishPath from job with manifest path: $ManifestPath and help version: $HelpVersion"
+    $newMarkdownCommandHelpSplat = @{
+      ModuleInfo                  = (Import-Module $ManifestPath -Force -PassThru)
+      OutputFolder                = $DocsPath
+      HelpVersion                 = [Version]$HelpVersion
+      WithModulePage              = $true
+      AbbreviateParameterTypeName = $true
+      # Ignore warnings about existing markdown files
+      WarningAction               = 'SilentlyContinue'
+    }
 
-		Write-Host "Module nupkg published to $PackagePath"
+    #Generate for any net new modules or commands that dont have markdown files yet. This allows us to preserve any manual changes to existing markdown files.
+    Write-Host -Fore Cyan "Generating markdown command help for new or changed commands. Output folder: $($newMarkdownCommandHelpSplat.OutputFolder)"
+    New-MarkdownCommandHelp @newMarkdownCommandHelpSplat | Out-Null
 
-	} finally {
-		# Return to the original location
-		Pop-Location
-	}
+    Get-ChildItem -Recurse -Path $newMarkdownCommandHelpSplat.OutputFolder -Include '*.md'
+		| Measure-PlatyPSMarkdown
+		| Where-Object FileType -Match 'CommandHelp'
+		| Import-MarkdownCommandHelp -Path { $_.FilePath }
+		| Export-MamlCommandHelp -OutputFolder $PublishPath -Force
+  }
+  | Receive-Job -Wait -AutoRemoveJob
+
+  #HACK: PlatyPS exports the help files to a subfolder named after the module, but to work properly it needs to be in a subfolder named after the culture (en-US). Hence this workaround.
+  New-Item -ItemType Directory -Force (Join-Path $PublishPath 'en-US') | Out-Null
+  Move-Item (Join-Path $PublishPath 'ExcelFast' '*.xml') (Join-Path $PublishPath 'en-US')
+  Remove-Item (Join-Path $PublishPath 'ExcelFast') -Recurse | Out-Null
 }
 
 Task Pester {
-	#Run in a separate job so as not to lock the assemblies
-	Start-Job -ScriptBlock { Invoke-Pester } | Receive-Job -Wait -AutoRemoveJob
+  #Run in a separate job so as not to lock the assemblies
+  Start-Job -ScriptBlock { Invoke-Pester } | Receive-Job -Wait -AutoRemoveJob
 }
 
 Task Pester-WinPS {
-	if (-not $IsWindows) {
-		Write-Host -ForegroundColor Yellow 'Skipping Pester-WinPS: non-Windows platform detected.'
-		return
-	}
-	& powershell.exe -noprofile -c {
-		$pester = Get-Module -FullyQualified @{ModuleName = 'Pester'; ModuleVersion = '5.0' } -ListAvailable -EA 0
-		if (-not $pester) {
-			Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
-			Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop
-		}
-		Invoke-Pester
-	}
+  if (-not $IsWindows) {
+    Write-Host -ForegroundColor Yellow 'Skipping Pester-WinPS: non-Windows platform detected.'
+    return
+  }
+  & powershell.exe -noprofile -c {
+    $pester = Get-Module -FullyQualified @{ModuleName = 'Pester'; ModuleVersion = '5.0' } -ListAvailable -EA 0
+    if (-not $pester) {
+      Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
+      Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop
+    }
+    Invoke-Pester
+  }
 }
 
 Task CompileAll CompilePS7, CompilePS51
 Task Test Pester, Pester-WinPS
-Task . Clean, Build, Test
+Task . Clean, Build, Docs, Test

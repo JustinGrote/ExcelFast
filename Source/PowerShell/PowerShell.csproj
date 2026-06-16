@@ -45,6 +45,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="PolySharp" Version="1.16.0" />
     <PackageReference Include="Microsoft.BCL.AsyncInterfaces" Version="10.0.9" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.9" />
   </ItemGroup>
 
   <!-- <Target Name="CopyPsdAssets" AfterTargets="Publish">

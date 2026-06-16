@@ -1,294 +1,275 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
-using System.Collections;
+using System;
+using System.Threading.Channels;
 using System.Collections.Concurrent;
-using System.Threading;
 
 using ExcelFast.Extensions;
 
 using MiniExcelLibs;
 
-using static System.Management.Automation.PSSerializer;
-
 using FilePath = Path;
 
 [Cmdlet(VerbsData.Export, CmdletDefaultName, SupportsShouldProcess = true)]
 [Alias("exwb")]
-public class ExportCommand : BaseCmdlet
+public class ExportCommand : TaskCmdlet
 {
 	[Parameter(
-			Mandatory = true,
-			Position = 0,
-			ValueFromPipelineByPropertyName = true,
-			HelpMessage = "Path to the Excel file to export to."
-	)]
-	[ValidateNotNullOrEmpty]
-	[NotNull]
-	public string? Destination { get; set; }
+    Mandatory = true,
+    Position = 0,
+    ValueFromPipelineByPropertyName = true,
+    HelpMessage = "Path to the Excel file to export to."
+  )]
+  [ValidateNotNullOrEmpty]
+  [NotNull]
+  public string? Destination { get; set; }
 
-	[Parameter(
-			Mandatory = true,
-			Position = 1,
-			ValueFromPipeline = true,
-			HelpMessage = "Objects to export to the Excel file."
-	)]
-	[ValidateNotNull]
-	[NotNull]
-	public PSObject[]? InputObject { get; set; }
+  [Parameter(
+    Mandatory = true,
+    Position = 1,
+    ValueFromPipeline = true,
+    HelpMessage = "Objects to export to the Excel file."
+  )]
+  [ValidateNotNull]
+  [NotNull]
+  public PSObject[]? InputObject { get; set; }
 
-	[Parameter(
-			HelpMessage = "Name of the sheet to export to. If not specified, exports to 'Sheet1'."
-	)]
-	[ValidateNotNullOrEmpty]
-	public string SheetName { get; set; } = "Sheet1";
+  [Parameter(
+    HelpMessage = "Name of the sheet to export to. If not specified, exports to 'Sheet1'."
+  )]
+  [ValidateNotNullOrEmpty]
+  public string SheetName { get; set; } = "Sheet1";
 
-	[Parameter(
-			HelpMessage = "Forces overwriting of the destination file if it already exists."
-	)]
-	public SwitchParameter Force { get; set; }
+  [Parameter(
+    HelpMessage = "Forces overwriting of the destination file if it already exists."
+  )]
+  public SwitchParameter Force { get; set; }
 
-	// Collection "queue" to store data to be exported, allowing for concurrent processing
-	private readonly BlockingCollection<Dictionary<string, object>> exportQueue = new();
-	private readonly CancellationTokenSource exportCancellationTokenSource = new();
-	private CancellationToken cancelToken
-	{
-		get
-		{
-			exportCancellationTokenSource.Token.ThrowIfCancellationRequested();
-			return exportCancellationTokenSource.Token;
-		}
-	}
+  [Parameter(
+    HelpMessage = "Bounded queue capacity used to stream rows to the Excel writer. Larger values reduce producer stalls for large exports."
+  )]
+  public int InputQueueSize { get; set; } = 1024;
 
-	// The running task to export data to Excel
-	private Task<int[]>? exportTask;
+  // The running task to export data to Excel
+  private Task<int[]>? exportTask;
 
-	private bool whatIfSpecified = false;
+  private bool whatIfSpecified = false;
 
-	private int rowsExported;
+  private int rowsExported;
 
-	protected override void BeginProcessing()
-	{
-		if (Destination is null)
-		{
-			return;
-		}
+#if NET472
+  private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
+#else
+  private readonly Channel<Dictionary<string, object>> exportQueue;
+#endif
 
-		string providerPath = GetUnresolvedProviderPathFromPSPath(Destination);
-		try
-		{
-			string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
-			if (!AcceptedExtensions.Contains(fileExtension))
-			{
-				Error(
-					new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
-					$"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
-					"UnsupportedFileType",
-					providerPath,
-					terminating: true
-				);
-				return;
-			}
+  public ExportCommand()
+  {
+#if NET472
+    exportQueue = [];
+#else
+    exportQueue = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(InputQueueSize));
+#endif
+  }
 
-			string? directory = FilePath.GetDirectoryName(providerPath);
-			bool directoryExists = string.IsNullOrEmpty(directory) || Directory.Exists(directory);
-			bool destinationExists = File.Exists(providerPath);
+  protected override async Task Begin()
+  {
+    string providerPath = GetUnresolvedProviderPathFromPSPath(Destination);
+    string fileExtension = FilePath.GetExtension(providerPath).ToLowerInvariant();
+    if (!AcceptedExtensions.Contains(fileExtension))
+    {
+      Error(
+        new ArgumentException($"Unsupported file type '{fileExtension}' for '{providerPath}'.", "Path"),
+        $"Use one of the supported file types: {string.Join(", ", AcceptedExtensions)}",
+        "UnsupportedFileType",
+        providerPath,
+        terminating: true
+      );
+      return;
+    }
 
-			// Check if file or directory needs force
-			if (!Force.IsPresent && (!directoryExists || destinationExists))
-			{
-				Error(
-					new IOException($"Path '{providerPath}' already exists or requires directory creation."),
-					"Use -Force to proceed with the operation.",
-					"PathRequiresForce",
-					providerPath,
-					terminating: true
-				);
-				return;
-			}
+    string? directory = FilePath.GetDirectoryName(providerPath);
+    bool directoryExists = string.IsNullOrEmpty(directory) || Directory.Exists(directory);
+    bool destinationExists = File.Exists(providerPath);
 
-			string operation = destinationExists ? "Overwrite Workbook" : "Create Workbook";
-			whatIfSpecified = !ShouldProcess(providerPath, operation);
-			if (whatIfSpecified) return;
+    // Check if file or directory needs force
+    if (!Force.IsPresent && (!directoryExists || destinationExists))
+    {
+      Error(
+        new IOException($"Path '{providerPath}' already exists or requires directory creation."),
+        "Use -Force to proceed with the operation.",
+        "PathRequiresForce",
+        providerPath,
+        terminating: true
+      );
+      return;
+    }
 
-			// Create directory if it doesn't exist
-			if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-			{
-				Directory.CreateDirectory(directory);
-			}
+    string operation = destinationExists ? "Overwrite Workbook" : "Create Workbook";
+    whatIfSpecified = !await ShouldProcessAsync(providerPath, operation);
+    if (whatIfSpecified) return;
 
-			// Update destination for processing
-			Destination = providerPath;
-		}
-		catch (Exception ex)
-		{
-			Error(
-				ex,
-				"This is probably a bug, please report it.",
-				"ExportInitializationFailed",
-				providerPath,
-				terminating: true
-			);
-		}
-	}
+    // Create directory if it doesn't exist
+    if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+    {
+      Directory.CreateDirectory(directory);
+    }
 
-	protected override void ProcessRecord()
-	{
-		AssertExportTaskNotFaulted();
-		if (exportCancellationTokenSource.IsCancellationRequested)
-		{
-			return;
-		}
+    // Update destination for processing
+    Destination = providerPath;
+  }
 
-		if (InputObject is null || InputObject.Length == 0) return;
+  protected override async Task Process()
+  {
+    if (PipelineStopToken.IsCancellationRequested) return;
+    if (InputObject is null || InputObject.Length == 0) return;
 
-		ProcessInputObjects();
-	}
+    await ProcessInputObjects();
+  }
 
-	protected override void EndProcessing()
-	{
-		if (exportTask is null) ProcessInputObjects();
+  protected override async Task End()
+  {
 
-		if (whatIfSpecified)
-		{
-			Info($"What if: Would have written {rowsExported} rows to '{Destination}'", ["PSHOST"]);
-			return;
-		}
+    if (exportTask is null)
+    {
+      await ProcessInputObjects();
+    }
 
-		exportQueue.CompleteAdding();
+    if (whatIfSpecified)
+    {
+      Info($"WhatIf - Would have written {rowsExported} rows to '{Destination}'", ["PSHOST"]);
+      return;
+    }
 
-		if (exportTask is null)
-		{
-			Error(
-				new InvalidOperationException("Export task was not initialized."),
-				"This is probably a bug, please report it.",
-				"ExportTaskNotInitialized",
-				terminating: true
-			);
-			return;
-		}
+    if (exportTask is null)
+    {
+      Verbose($"No rows were exported to '{Destination}'.");
+      return;
+    }
 
-		try
-		{
-			Debug("Waiting for export task to complete.");
-			while (!exportTask.IsCompleted)
-			{
-				// Enables Ctrl-C to still work while waiting for the export task to complete
-				Thread.Sleep(100);
-			}
-			int[] result = exportTask.GetAwaiter().GetResult();
-			Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
-		}
-		catch (OperationCanceledException)
-		{
-			Warning($"Export cancelled for '{Destination}'.");
-		}
-		catch (Exception ex)
-		{
-			Error(
-				ex,
-				"This is probably a bug, please report it.",
-				"ExportProcessFailed",
-				terminating: true
-			);
-		}
-	}
+    try
+    {
+#if NET472
+      exportQueue.CompleteAdding();
+#else
+      exportQueue.Writer.TryComplete();
+#endif
 
+      Debug("Waiting for export task to complete.");
 
-	private void ProcessInputObjects()
-	{
-		foreach (PSObject inputObject in InputObject)
-		{
-			if (inputObject is null)
-			{
-				Debug($"Skipping null input object.");
-				return;
-			}
-			Dictionary<string, object> row = inputObject.ToFlatDictionary();
-			try
-			{
-				if (!whatIfSpecified) exportQueue.Add(row, cancelToken);
-				rowsExported++;
-				if (whatIfSpecified) return;
-			}
-			catch (OperationCanceledException)
-			{
-				Debug("Export row enqueue canceled.");
-				return;
-			}
+      int[] result = await exportTask;
 
-			// We must start after one item is enqueued, or else SaveAsAsync will hang.
-			if (exportTask is null)
-			{
-				// Start the export task immediately to begin streaming
-				Debug("Starting MiniExcel export task.");
-				// HACK: SaveAsAsync blocks on the consuming enumerable before returning the task object, so we wrap it in an outer task
+      Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
+    }
+    catch (OperationCanceledException)
+    {
+      Warning($"Export cancelled for '{Destination}'.");
+    }
+    catch (Exception ex)
+    {
+      Error(
+        ex,
+        "An error occurred during export. See exception details for more information.",
+        "ExportFailed",
+        Destination,
+        terminating: true
+      );
+    }
+  }
 
-				exportTask = StartExporter();
-			}
-		}
-	}
+  private async Task ProcessInputObjects()
+  {
+    if (InputObject is null || InputObject.Length == 0)
+    {
+      Debug("No rows were supplied for export.");
+      return;
+    }
 
-	protected override void StopProcessing()
-	{
-		Debug("Stopping export process due to pipeline stop request.");
-		exportCancellationTokenSource.Cancel();
-		exportQueue.CompleteAdding();
+    foreach (PSObject inputObject in InputObject)
+    {
+      if (inputObject is null)
+      {
+        Debug("Skipping null input object.");
+        continue;
+      }
 
-		if (exportTask is null)
-		{
-			return;
-		}
+      Dictionary<string, object> row = inputObject.ToFlatDictionary();
+      try
+      {
+        rowsExported++;
+        if (whatIfSpecified)
+        {
+          continue;
+        }
 
-		try
-		{
-			Debug("Waiting for export task to acknowledge cancellation.");
-			exportTask.GetAwaiter().GetResult();
-			Debug($"Export stopped for destination {Destination}.");
-		}
+#if NET472
+        exportQueue.Add(row, PipelineStopToken);
+#else
+        await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
+#endif
+        StartExportTaskIfNeeded();
+      }
+      catch (OperationCanceledException)
+      {
+        Debug("Export row enqueue canceled.");
+        return;
+      }
+    }
+  }
+
+  private void StartExportTaskIfNeeded()
+  {
+    if (exportTask is not null)
+    {
+      return;
+    }
+
+#if NET472
+    var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
+#else
+    var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
+#endif
+
+    Debug("Starting MiniExcel export task.");
+
+    exportTask = Task.Run(async () => await MiniExcel.SaveAsAsync(
+      Destination,
+      queue,
+      sheetName: SheetName,
+      excelType: ExcelType.XLSX,
+      overwriteFile: Force.IsPresent,
+      cancellationToken: PipelineStopToken
+    ), PipelineStopToken);
+  }
+
+  protected override async Task Clean()
+  {
+    Debug("Stopping export process due to pipeline stop request.");
+#if NET472
+    exportQueue.CompleteAdding();
+#else
+    exportQueue.Writer.TryComplete();
+#endif
+
+    if (exportTask is null)
+    {
+      return;
+    }
+
+    try
+    {
+      Debug("Waiting for export task to acknowledge cancellation.");
+      await exportTask;
+      Debug($"Export stopped for destination {Destination}.");
+    }
 		catch (OperationCanceledException)
 		{
 			Debug("Export task cancellation observed.");
-		}
-		catch (Exception ex)
-		{
-			Error(
-				ex,
-				"This is probably a bug, please report it.",
-				"ExportProcessFailed",
-				terminating: true
-			);
-		}
-	}
+    }
+  }
 
-	private void AssertExportTaskNotFaulted()
-	{
-		if (exportTask?.IsFaulted == true)
-		{
-			try
-			{
-				exportTask.GetAwaiter().GetResult();
-			}
-			catch (Exception ex)
-			{
-				Error(
-					ex,
-					"An error occurred in the export process.",
-					"ExportTaskError",
-					terminating: true
-				);
-			}
-		}
-	}
-
-	private Task<int[]> StartExporter() =>
-		Task.Run(async () =>
-			await MiniExcel.SaveAsAsync(
-				Destination,
-				exportQueue.GetConsumingEnumerable(cancelToken),
-				sheetName: SheetName,
-				excelType: ExcelType.XLSX,
-				overwriteFile: Force.IsPresent,
-				cancellationToken: cancelToken
-			), cancelToken
-		);
+  private async void AssertExportTaskNotFaulted()
+  {
+    if (exportTask?.IsFaulted == true) await exportTask; // This will re-throw the exception from the export task to be handled by the cmdlet's error handling
+  }
 }
