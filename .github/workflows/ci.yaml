@@ -51,14 +51,14 @@ jobs:
         }
     - name: 🧪 Test
       run: |
-        try {Invoke-Build Test}
+        try {Invoke-Build Pester}
         catch {
           "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
           throw
         }
     - name: 🧪 Test - WinPS
       run: |
-        try {Invoke-Build Test-WinPS}
+        try {Invoke-Build Pester-WinPS}
         catch {
           "::error file=$PSScriptRoot/build.ps1::Build failed with error: $($_.Exception.Message) `n $(Get-Error | Out-String)" -replace "`n","%0A"
           throw
