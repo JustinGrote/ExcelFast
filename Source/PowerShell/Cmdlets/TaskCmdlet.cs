@@ -64,6 +64,7 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
 
   protected virtual void Dispose(bool disposing)
   {
+    System.Console.WriteLine("DEBUG: Dispose called with disposing = " + disposing);
     if (_disposed)
     {
       return;
@@ -78,20 +79,24 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
   }
 #endif
 
+  int methodCounter = 1;
   /// <summary>
   /// Executes an asynchronous cmdlet step and routes its output and errors through the PowerShell pipeline.
   /// </summary>
   private void ExecuteAsyncPipelineStep(Func<Task> cmdletMethod)
   {
     _output = [];
-    Task.Run(async () =>
+    var task = Task.Run(async () =>
     {
       try
       {
         await cmdletMethod();
+        methodCounter++;
+        System.Console.WriteLine($"DEBUG: Completed {cmdletMethod.Method.Name} ({methodCounter}) without exception.");
       }
       catch (Exception ex)
       {
+        System.Console.WriteLine($"DEBUG: Unhandled Exception in {cmdletMethod.Method.Name}: {ex}");
         // Handle exceptions by writing them to the error stream
         Error(ex, terminating: true);
       }
@@ -105,6 +110,7 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
     {
       ProcessOutput(item);
     }
+    task.GetAwaiter().GetResult(); // Observe any exceptions from the task, though there shouldn't be any since we catch them and write them to the error stream
   }
 
   private void ProcessOutput(OutputItem inputObject)
@@ -119,6 +125,9 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
 
     switch (item)
     {
+      case TerminatingError terminatingError:
+        ThrowTerminatingError(terminatingError.Error);
+        break;
       case ShouldProcessPrompt prompt:
         bool response = string.IsNullOrEmpty(prompt.Action)
           ? base.ShouldProcess(prompt.Target)
@@ -239,12 +248,16 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
       }
     };
 
+    System.Console.WriteLine($"DEBUGTEST: Created ErrorRecord with message: {error.ErrorDetails.Message} and recommended action: {error.ErrorDetails.RecommendedAction}");
+
     if (terminating)
     {
-      ThrowTerminatingError(error);
+      System.Console.WriteLine($"DEBUGTEST: Throwing terminating error.");
+      AddOutput(new TerminatingError(error));
     }
     else
     {
+      System.Console.WriteLine($"DEBUGTEST: Writing non-terminating error.");
       WriteError(error);
     }
   }
@@ -396,3 +409,4 @@ internal record ShouldProcessCustomPrompt(
     string confirmMessage,
     TaskCompletionSource<bool> Response
 );
+internal record TerminatingError(ErrorRecord Error);

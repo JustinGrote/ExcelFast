@@ -47,7 +47,7 @@ Task Clean {
 	$env:GIT_ASK_YESNO = 'false'
 	git clean -fdx --no-interactive -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
 	if ($LASTEXITCODE -ne 0) {
-		throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked"
+    throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked. Is the module loaded in a running PowerShell window?"
 	}
 }
 
