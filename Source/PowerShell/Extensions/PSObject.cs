@@ -1,6 +1,7 @@
 namespace ExcelFast.Extensions;
 
 using System.Collections;
+using System.Management.Automation.Runspaces;
 
 public static class PSObjectExtensions
 {
@@ -32,9 +33,9 @@ public static class PSObjectExtensions
 				return dictionary;
 			}
 
-			// Handle scalars (primitives, strings, DateTime, etc.) - map to "Value" column
-			System.Type baseType = baseObject.GetType();
-			if (baseType.IsPrimitive || baseObject is string || baseObject is decimal || baseObject is DateTime)
+      // Handle scalars (primitives, strings, DateTime, etc.) - map to "Value" column
+      Type baseType = baseObject.GetType();
+      if (baseType.IsPrimitive || baseObject is string || baseObject is decimal || baseObject is DateTime)
 			{
 				dictionary["Value"] = baseObject;
 				return dictionary;
@@ -49,19 +50,43 @@ public static class PSObjectExtensions
 				}
 
 				string value;
-				if (property.Value is not string && property.Value is not IDictionary && property.Value is IEnumerable<object> enumerable)
-				{
-					value = string.Join(", ", enumerable.Select(x => x?.ToString() ?? string.Empty));
-				}
-				else
-				{
-					value = property.Value?.ToString() ?? string.Empty;
-				}
+        object? propertyValue = GetPropertyValue(psobject, property);
+        value = propertyValue is not string && propertyValue is not IDictionary && propertyValue is IEnumerable<object> enumerable
+          ? string.Join(", ", enumerable.Select(x => x?.ToString() ?? string.Empty))
+          : propertyValue?.ToString() ?? string.Empty;
 
-				dictionary[property.Name] = value;
-			}
+        dictionary[property.Name] = value;
+      }
 
-			return dictionary;
-		}
-	}
+      return dictionary;
+    }
+
+    private static object? GetPropertyValue(PSObject targetObject, PSPropertyInfo property)
+    {
+      if (property is not (PSScriptProperty or PSCodeProperty))
+      {
+        return property.Value;
+      }
+
+      Runspace? originalRunspace = Runspace.DefaultRunspace;
+      Runspace targetRunspace = originalRunspace ?? RunspaceFactory.CreateRunspace();
+      if (targetRunspace.RunspaceStateInfo.State == RunspaceState.BeforeOpen)
+      {
+        targetRunspace.Open();
+      }
+      try
+      {
+        Runspace.DefaultRunspace = targetRunspace;
+        return property.Value;
+      }
+      finally
+      {
+        Runspace.DefaultRunspace = originalRunspace;
+        if (originalRunspace is null)
+        {
+          targetRunspace.Dispose();
+        }
+      }
+    }
+  }
 }

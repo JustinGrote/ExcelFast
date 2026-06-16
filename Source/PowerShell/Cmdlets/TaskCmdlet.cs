@@ -93,7 +93,7 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
       catch (Exception ex)
       {
         // Handle exceptions by writing them to the error stream
-        Error(ex);
+        Error(ex, terminating: true);
       }
       finally
       {
@@ -172,6 +172,93 @@ public abstract class TaskCmdlet : BetterPSCmdlet, IDisposable
 
     AddOutput(outputObject, true);
   }
+
+  internal new void Debug(string message, bool raw = false) => WriteDebug(raw ? message : $"{name}: {message}");
+  internal new void Verbose(string message, bool raw = false) => WriteVerbose(raw ? message : $"{name}: {message}");
+  internal new void Warning(string message, bool raw = false) => WriteWarning(raw ? message : $"{name}: {message}");
+  internal new void Info(string message, string[]? tags = null, bool raw = false)
+    => WriteInformation(raw ? message : $"{name}: {message}", tags ?? []);
+  internal new void Console(string message, bool raw = false)
+    => WriteInformation(raw ? message : $"{name}: {message}", ["PSHOST"]);
+  internal new void Progress(
+    string activity,
+    string status = "",
+    string currentOperation = "",
+    int percentComplete = 0,
+    int id = 1,
+    int parentId = -1,
+    bool completed = false
+  ) => WriteProgress(new ProgressRecord(id, activity, status)
+  {
+    CurrentOperation = currentOperation,
+    ParentActivityId = parentId,
+    RecordType = completed || percentComplete == 100 ? ProgressRecordType.Completed : ProgressRecordType.Processing,
+    PercentComplete = percentComplete
+  });
+
+  internal new void Error(
+      Exception exception,
+      string? recommendedAction = null,
+      string errorId = "PSCmdletError",
+      object? targetObject = null,
+      // Usually comes from the exception message, specify this to override
+      string? errorDetailsMessage = null,
+      // This is often autodetermined
+      ErrorCategory? category = null,
+      bool terminating = false)
+  {
+    ErrorRecord error = new(
+        exception,
+        errorId,
+        category ?? exception switch
+        {
+          ArgumentException => ErrorCategory.InvalidArgument,
+          FileNotFoundException => ErrorCategory.ObjectNotFound,
+          InvalidOperationException => ErrorCategory.InvalidOperation,
+          NotSupportedException => ErrorCategory.NotSpecified,
+          UnauthorizedAccessException => ErrorCategory.SecurityError,
+          PathTooLongException => ErrorCategory.InvalidArgument,
+          DirectoryNotFoundException => ErrorCategory.ObjectNotFound,
+          IOException => ErrorCategory.WriteError,
+          NullReferenceException => ErrorCategory.InvalidData,
+          FormatException => ErrorCategory.InvalidData,
+          TimeoutException => ErrorCategory.OperationTimeout,
+          OutOfMemoryException => ErrorCategory.ResourceUnavailable,
+          NotImplementedException => ErrorCategory.NotImplemented,
+          OperationCanceledException => ErrorCategory.OperationStopped,
+          AccessViolationException => ErrorCategory.SecurityError,
+          InvalidCastException => ErrorCategory.InvalidType,
+          _ => ErrorCategory.NotSpecified
+        },
+        targetObject
+    )
+    {
+      ErrorDetails = new ErrorDetails(errorDetailsMessage ?? exception.Message)
+      {
+        RecommendedAction = recommendedAction
+      }
+    };
+
+    if (terminating)
+    {
+      ThrowTerminatingError(error);
+    }
+    else
+    {
+      WriteError(error);
+    }
+  }
+
+  internal new void Error(
+    string message,
+    string? recommendedAction = null,
+    string errorId = "PSCmdletError",
+    object? targetObject = null,
+    ErrorCategory category = ErrorCategory.NotSpecified,
+    bool terminating = false
+  ) => Error(
+    new CmdletInvocationException(message), recommendedAction, errorId, targetObject, null, category, terminating
+  );
 
   protected new void WriteWarning(string message) => AddOutput(new WarningRecord(message));
   protected new void WriteVerbose(string message) => AddOutput(new VerboseRecord(message));
@@ -277,7 +364,14 @@ public class BetterPSCmdlet : PSCmdlet
     }
     else
     {
-      WriteError(error);
+      try
+      {
+        WriteError(error);
+      }
+      catch (PipelineStoppedException)
+      {
+        // This can happen if the pipeline is already stopping when we try to write the error, in that case we just swallow it since the error is likely still visible in the console and there's nothing we can do about it.
+      }
     }
   }
 

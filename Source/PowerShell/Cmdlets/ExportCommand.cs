@@ -1,5 +1,6 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 
 using ExcelFast.Extensions;
@@ -50,73 +51,15 @@ public class ExportCommand : TaskCmdlet
 
   private int rowsExported;
 
+#if NET472
+  private readonly BlockingCollection<Dictionary<string, object>> exportQueue = [];
+#else
   private readonly Channel<Dictionary<string, object>> exportQueue
-  = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(1));
+    = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(1));
+#endif
 
   protected override async Task Begin()
   {
-
-    string coreLibPath = typeof(object).Assembly.Location;
-
-    if (string.IsNullOrEmpty(coreLibPath) || !System.IO.Path.IsPathFullyQualified(coreLibPath))
-    {
-      System.Console.WriteLine("CoreLib is not in a rooted path ('{0}')", coreLibPath);
-    }
-    else
-    {
-      string? dotnetRuntimeDirectory = System.IO.Path.GetDirectoryName(coreLibPath);
-      if (dotnetRuntimeDirectory is null)
-      {
-        System.Console.WriteLine(".NET Runtime directory is null");
-      }
-      else
-      {
-        string? nativeLibraryPrefix = null, nativeLibraryExtension = null;
-        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-        {
-          nativeLibraryPrefix = string.Empty;
-          nativeLibraryExtension = ".dll";
-        }
-        else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-        {
-          nativeLibraryPrefix = "lib";
-          nativeLibraryExtension = ".so";
-        }
-        else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
-        {
-          nativeLibraryPrefix = "lib";
-          nativeLibraryExtension = ".so";
-        }
-        else
-        {
-          System.Console.WriteLine("Unsupported OS");
-        }
-
-        if (nativeLibraryPrefix is not null)
-        {
-          string dbiPath = System.IO.Path.Combine(dotnetRuntimeDirectory, nativeLibraryPrefix + "mscordbi" + nativeLibraryExtension);
-          string dacPath = System.IO.Path.Combine(dotnetRuntimeDirectory, nativeLibraryPrefix + "mscordaccore" + nativeLibraryExtension);
-          if (!System.IO.File.Exists(dbiPath))
-          {
-            System.Console.WriteLine("DBI not found at '{0}'", dbiPath);
-          }
-          else if (!System.IO.File.Exists(dacPath))
-          {
-            System.Console.WriteLine("DAC not found at '{0}'", dacPath);
-          }
-          else
-          {
-            System.Console.WriteLine(".NET Debugging Services libries were found");
-          }
-        }
-      }
-    }
-
-    if (Destination is null)
-    {
-      return;
-    }
-
     string providerPath = GetUnresolvedProviderPathFromPSPath(Destination);
     try
     {
@@ -191,7 +134,7 @@ public class ExportCommand : TaskCmdlet
 
     if (whatIfSpecified)
     {
-      Info($"What if: Would have written {rowsExported} rows to '{Destination}'", ["PSHOST"]);
+      Info($"WhatIf - Would have written {rowsExported} rows to '{Destination}'", ["PSHOST"]);
       return;
     }
 
@@ -208,7 +151,11 @@ public class ExportCommand : TaskCmdlet
 
     try
     {
-      if (!exportQueue.Writer.TryComplete()) Warning("Export queue was already marked as complete, probably a bug.");
+#if NET472
+      exportQueue.CompleteAdding();
+#else
+      exportQueue.Writer.TryComplete();
+#endif
       Debug("Waiting for export task to complete.");
 
       int[] result = await exportTask;
@@ -241,8 +188,15 @@ public class ExportCommand : TaskCmdlet
       Dictionary<string, object> row = inputObject.ToFlatDictionary();
       try
       {
-        await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
         rowsExported++;
+        // Dont actually do any work if we are just testing with -WhatIf, but we still want to count the rows for accurate reporting
+        if (whatIfSpecified) return;
+
+#if NET472
+        exportQueue.Add(row, PipelineStopToken);
+#else
+        await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
+#endif
       }
       catch (OperationCanceledException)
       {
@@ -251,14 +205,18 @@ public class ExportCommand : TaskCmdlet
       }
 
       // We dont want to start the SaveAsAsync task until we have at least one row to export, to avoid creating an empty file if the input is empty
-      if (exportTask is null && !whatIfSpecified)
+      if (exportTask is null)
       {
         // Start the export task immediately to begin streaming
         Debug("Starting MiniExcel export task.");
 
         exportTask = MiniExcel.SaveAsAsync(
           Destination,
+#if NET472
+          exportQueue.GetConsumingEnumerable(PipelineStopToken),
+#else
           exportQueue.Reader.ReadAllAsync(PipelineStopToken),
+#endif
           sheetName: SheetName,
           excelType: ExcelType.XLSX,
           overwriteFile: Force.IsPresent,
@@ -271,7 +229,11 @@ public class ExportCommand : TaskCmdlet
   protected override async Task Clean()
   {
     Debug("Stopping export process due to pipeline stop request.");
+#if NET472
+    exportQueue.CompleteAdding();
+#else
     exportQueue.Writer.TryComplete();
+#endif
 
     if (exportTask is null)
     {
