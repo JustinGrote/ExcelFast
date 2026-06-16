@@ -57,19 +57,19 @@ public class ExportCommand : TaskCmdlet
 
   private int rowsExported;
 
-#if NET472
-  private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
-#else
+  // #if NET472
+  //   private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
+  // #else
   private readonly Channel<Dictionary<string, object>> exportQueue;
-#endif
+  // #endif
 
   public ExportCommand()
   {
-#if NET472
-    exportQueue = [];
-#else
+    // #if NET472
+    //     exportQueue = [];
+    // #else
     exportQueue = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(InputQueueSize));
-#endif
+    // #endif
   }
 
   protected override async Task Begin()
@@ -149,11 +149,11 @@ public class ExportCommand : TaskCmdlet
 
     try
     {
-#if NET472
-      exportQueue.CompleteAdding();
-#else
+      // #if NET472
+      //       exportQueue.CompleteAdding();
+      // #else
       exportQueue.Writer.TryComplete();
-#endif
+      // #endif
 
       Debug("Waiting for export task to complete.");
 
@@ -196,11 +196,11 @@ public class ExportCommand : TaskCmdlet
       Exec(() =>
       {
         var row = inputObject.ToFlatDictionary();
-#if NET472
-        exportQueue.Add(row, PipelineStopToken);
-#else
+        // #if NET472
+        //         exportQueue.Add(row, PipelineStopToken);
+        // #else
         exportQueue.Writer.TryWrite(row);
-#endif
+        // #endif
       });
 
       try
@@ -228,11 +228,11 @@ public class ExportCommand : TaskCmdlet
       return;
     }
 
-#if NET472
-    var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
-#else
+    // #if NET472
+    //     var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
+    // #else
     var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
-#endif
+    // #endif
 
     Debug("Starting MiniExcel export task.");
 
@@ -249,11 +249,11 @@ public class ExportCommand : TaskCmdlet
   protected override async Task Clean()
   {
     Debug("Stopping export process due to pipeline stop request.");
-#if NET472
-    exportQueue.CompleteAdding();
-#else
+    // #if NET472
+    //     exportQueue.CompleteAdding();
+    // #else
     exportQueue.Writer.TryComplete();
-#endif
+    // #endif
 
     if (exportTask is null)
     {
