@@ -10,9 +10,10 @@ using ClosedXML.Excel;
 
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 
-using MiniExcelLibs;
+using MiniExcelLib;
 
 using FilePath = Path;
+using MiniExcelLib.OpenXml;
 
 [Cmdlet(VerbsData.Import, CmdletDefaultName)]
 [Alias("iwb")]
@@ -162,10 +163,11 @@ public class ImportCommand : BetterPSCmdlet
 
 			IEnumerable<string> sheetNamesToImport = [];
 
-			IReadOnlyCollection<string> availableSheetNames = MiniExcel.GetSheetNames(providerPath).ToArray();
-			if (SheetName == null || SheetName.Length == 0)
-			{
-				Debug($"No sheet name provided. Importing the first sheet from '{providerPath}'.");
+      var importer = MiniExcel.Importers.GetOpenXmlImporter();
+      IReadOnlyCollection<string> availableSheetNames = importer.GetSheetNames(providerPath).ToArray();
+      if (SheetName == null || SheetName.Length == 0)
+      {
+        Debug($"No sheet name provided. Importing the first sheet from '{providerPath}'.");
         sheetNamesToImport = [availableSheetNames.FirstOrDefault() ?? "Sheet1"];
       }
       else
@@ -265,39 +267,40 @@ public class ImportCommand : BetterPSCmdlet
 	{
 		IEnumerable<dynamic> rows;
 
-		ICollection<string> columns = MiniExcel.GetColumns(
-			providerPath,
-			!NoHeaders.IsPresent,
-			currentSheetName,
-			startCell: StartCell
-		);
+    var importer = MiniExcel.Importers.GetOpenXmlImporter();
+    ICollection<string> columns = importer.GetColumnNames(
+      providerPath,
+      hasHeaderRow: !NoHeaders.IsPresent,
+      sheetName: currentSheetName,
+      startCell: StartCell
+    ).ToArray();
 
-		bool duplicateColumnSet = !columnSets.Add(columns);
+    bool duplicateColumnSet = !columnSets.Add(columns);
 
-		if (duplicateColumnSet || !columnSets.Any(c => c.SequenceEqual(columns)))
-		{
-			Warning($"Sheet '{currentSheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
-		}
+    if (duplicateColumnSet || !columnSets.Any(c => c.SequenceEqual(columns)))
+    {
+      Warning($"Sheet '{currentSheetName}' in '{providerPath}' has different columns than previously imported sheets. The resultant object output may be different and not displayed correctly.");
+    }
 
-		rows = string.IsNullOrEmpty(EndCell)
-		? MiniExcel.Query(
-			providerPath,
-			useHeaderRow: !NoHeaders.IsPresent,
-			sheetName: currentSheetName,
-			startCell: StartCell
-		)
-		: MiniExcel.QueryRange(
-			providerPath,
-			!NoHeaders.IsPresent,
-			currentSheetName,
-			startCell: StartCell,
-			endCell: EndCell
-		);
+    rows = string.IsNullOrEmpty(EndCell)
+    ? importer.Query(
+      providerPath,
+      hasHeaderRow: !NoHeaders.IsPresent,
+      sheetName: currentSheetName,
+      startCell: StartCell
+    )
+    : importer.QueryRange(
+      providerPath,
+      hasHeaderRow: !NoHeaders.IsPresent,
+      sheetName: currentSheetName,
+      startCell: StartCell,
+      endCell: EndCell
+    );
 
-		if (Raw.IsPresent)
-		{
-			// Return the raw enumerable as-is so the consumer can stream/transform using their preferred method.
-			WriteObject(rows, false);
+    if (Raw.IsPresent)
+    {
+      // Return the raw enumerable as-is so the consumer can stream/transform using their preferred method.
+      WriteObject(rows, false);
 			return;
 		}
 
@@ -327,8 +330,12 @@ public class ImportCommand : BetterPSCmdlet
 
 	static string GetWorkbookPath(IXLWorkbook workbook)
 	{
-		string path = workbook.ToString();
-		path = Regex.Replace(path, @"^XLWorkbook\((.*)\)$", "$1");
-		return path;
+    string? path = workbook.ToString();
+    if (string.IsNullOrEmpty(path))
+    {
+      throw new ArgumentException("The provided workbook does not have a valid path. Ensure the workbook is saved and has a valid file path.");
+    }
+    path = Regex.Replace(path, @"^XLWorkbook\((.*)\)$", "$1");
+    return path;
 	}
 }
