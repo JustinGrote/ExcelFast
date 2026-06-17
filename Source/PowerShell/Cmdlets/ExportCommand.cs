@@ -2,11 +2,11 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 using System;
 using System.Threading.Channels;
-using System.Collections.Concurrent;
 
 using ExcelFast.Extensions;
 
-using MiniExcelLibs;
+using MiniExcelLib;
+using MiniExcelLib.OpenXml;
 
 using FilePath = Path;
 
@@ -193,7 +193,7 @@ public class ExportCommand : TaskCmdlet
         continue;
       }
 
-      Exec(() =>
+      await Post(() =>
       {
         var row = inputObject.ToFlatDictionary();
         // #if NET472
@@ -236,11 +236,12 @@ public class ExportCommand : TaskCmdlet
 
     Debug("Starting MiniExcel export task.");
 
-    exportTask = Task.Run(async () => await MiniExcel.SaveAsAsync(
+    var exporter = MiniExcel.Exporters.GetOpenXmlExporter();
+
+    exportTask = Task.Run(async () => await exporter.ExportAsync(
       Destination,
       queue,
       sheetName: SheetName,
-      excelType: ExcelType.XLSX,
       overwriteFile: Force.IsPresent,
       cancellationToken: PipelineStopToken
     ), PipelineStopToken);
