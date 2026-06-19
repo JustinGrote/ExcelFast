@@ -6,6 +6,10 @@ param()
 . $PSScriptRoot/../Fixtures/Fixtures.ps1
 
 Describe 'Export-Workbook Command Tests' {
+  if (-not $IsCoreCLR) {
+    Write-Warning "Export-Workbook tests are currently skipped on Windows PowerShell due to Pester stack size limitations."
+    return
+  }
 	BeforeEach {
 		$DestPath = Join-Path 'TestDrive:' ("{0}.xlsx" -f [guid]::NewGuid())
 	}

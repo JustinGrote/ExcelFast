@@ -44,9 +44,16 @@
       },
       "MiniExcel": {
         "type": "Direct",
-        "requested": "[1.44.1, )",
-        "resolved": "1.44.1",
-        "contentHash": "9O+Xmazr7d46iplPO/Egd4Xl9vHyM9CRDIKqOy/rMVh6hREThPoNfzd57JPVTdwqftd9aPU/lT/l7fQGvbTszg=="
+        "requested": "[2.0.0-preview.4, )",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "KJ8essDJ0hqV/wd36RxbhF0p2PWL8lZ6AWfU8SX+UQP4PtEij2S0ZZTpx88zGvxPD3bPS/87iSJ7j3TDO7qZTg==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
+          "Microsoft.Bcl.Memory": "10.0.7",
+          "MiniExcel.Core": "2.0.0-preview.4",
+          "MiniExcel.Csv": "2.0.0-preview.4",
+          "MiniExcel.OpenXml": "2.0.0-preview.4"
+        }
       },
       "PolySharp": {
         "type": "Direct",
@@ -117,10 +124,49 @@
         "resolved": "1.1.1",
         "contentHash": "MalY0Y/uM/LjXtHfX/26l2VtN4LDNZ2OE3aumNOHDLsT4fNYy2hiHXI4CXCqKpNUNm7iJ2brrc4J89UdaL56FA=="
       },
+      "Microsoft.Bcl.Memory": {
+        "type": "Transitive",
+        "resolved": "10.0.7",
+        "contentHash": "+0MJLOVIO64hZuP8vwdIBbF8QmOw8ZK/1PXq6h+981OrRaWo6e8PmUajbEO7fuKfmaDxasxj0sQPZJI3Dewpig==",
+        "dependencies": {
+          "System.Memory": "4.6.3",
+          "System.Runtime.CompilerServices.Unsafe": "6.1.2",
+          "System.ValueTuple": "4.6.2"
+        }
+      },
       "Microsoft.NETFramework.ReferenceAssemblies.net472": {
         "type": "Transitive",
         "resolved": "1.0.3",
         "contentHash": "0E7evZXHXaDYYiLRfpyXvCh+yzM2rNTyuZDI+ZO7UUqSc6GfjePiXTdqJGtgIKUwdI81tzQKmaWprnUiPj9hAw=="
+      },
+      "MiniExcel.Core": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "Edp5uDXOnfWTwTJsHK0p5f+fU83TW0yoC0xtkW2IG6AF72eel2EC0YoUcpR5RUHsBKX/h2+iXh7hP/d7HT0fWw==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
+          "Microsoft.Bcl.Memory": "10.0.7"
+        }
+      },
+      "MiniExcel.Csv": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "X4qg5e/iVsdBEU5Ic+ccFdzZ29hTwzHIZwzy+CfY6cnoGaoS3WbEtBWwlpR116qymtol+l3RtKd4mPbQcezMww==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
+          "Microsoft.Bcl.Memory": "10.0.7",
+          "MiniExcel.Core": "2.0.0-preview.4"
+        }
+      },
+      "MiniExcel.OpenXml": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "TKzPQLz+SZGgS6sJgJorwP4Lsj9Izu1D8SPYhUu7u8teobYR/usrgGX5iFRohfLu0mgFIwOnDY+9bL3f3M79MA==",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.7",
+          "Microsoft.Bcl.Memory": "10.0.7",
+          "MiniExcel.Core": "2.0.0-preview.4"
+        }
       },
       "RBush.Signed": {
         "type": "Transitive",
@@ -129,23 +175,23 @@
       },
       "System.Buffers": {
         "type": "Transitive",
-        "resolved": "4.5.1",
-        "contentHash": "Rw7ijyl1qqRS0YQD/WycNst8hUUMgrMH4FCn1nNm27M4VxchZ1js3fVjQaANHO5f3sN4isvP4a+Met9Y4YomAg=="
+        "resolved": "4.6.1",
+        "contentHash": "N8GXpmiLMtljq7gwvyS+1QvKT/W2J8sNAvx+HVg4NGmsG/H+2k/y9QI23auLJRterrzCiDH+IWAw4V/GPwsMlw=="
       },
       "System.Memory": {
         "type": "Transitive",
-        "resolved": "4.5.5",
-        "contentHash": "XIWiDvKPXaTveaB7HVganDlOCRoj03l+jrwNvcge/t8vhGYKvqV+dMv6G4SAX2NoNmN0wZfVPTAlFwZcZvVOUw==",
+        "resolved": "4.6.3",
+        "contentHash": "qdcDOgnFZY40+Q9876JUHnlHu7bosOHX8XISRoH94fwk6hgaeQGSgfZd8srWRZNt5bV9ZW2TljcegDNxsf+96A==",
         "dependencies": {
-          "System.Buffers": "4.5.1",
-          "System.Numerics.Vectors": "4.5.0",
-          "System.Runtime.CompilerServices.Unsafe": "4.5.3"
+          "System.Buffers": "4.6.1",
+          "System.Numerics.Vectors": "4.6.1",
+          "System.Runtime.CompilerServices.Unsafe": "6.1.2"
         }
       },
       "System.Numerics.Vectors": {
         "type": "Transitive",
-        "resolved": "4.5.0",
-        "contentHash": "QQTlPTl06J/iiDbJCiepZ4H//BVraReU4O4EoRw1U02H5TLUIT7xn3GnDp9AXPSlJUDyFs4uWjWafNX6WrAojQ=="
+        "resolved": "4.6.1",
+        "contentHash": "sQxefTnhagrhoq2ReR0D/6K0zJcr9Hrd6kikeXsA1I8kOCboTavcUC4r7TSfpKFeE163uMuxZcyfO1mGO3EN8Q=="
       },
       "System.Runtime.CompilerServices.Unsafe": {
         "type": "Transitive",
@@ -159,6 +205,11 @@
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "6.1.2"
         }
+      },
+      "System.ValueTuple": {
+        "type": "Transitive",
+        "resolved": "4.6.2",
+        "contentHash": "yQgmjfFximrNm9LIV3mL6T5MzjeC+epeE5rl4hXxAlYmxby7RM1dPSkIKXk9HNkl6G54h2JHOmLD46+Pey+IRg=="
       },
       "ExcelFast.ALCLoader": {
         "type": "Project"
@@ -180,9 +231,14 @@
       },
       "MiniExcel": {
         "type": "Direct",
-        "requested": "[1.44.1, )",
-        "resolved": "1.44.1",
-        "contentHash": "9O+Xmazr7d46iplPO/Egd4Xl9vHyM9CRDIKqOy/rMVh6hREThPoNfzd57JPVTdwqftd9aPU/lT/l7fQGvbTszg=="
+        "requested": "[2.0.0-preview.4, )",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "KJ8essDJ0hqV/wd36RxbhF0p2PWL8lZ6AWfU8SX+UQP4PtEij2S0ZZTpx88zGvxPD3bPS/87iSJ7j3TDO7qZTg==",
+        "dependencies": {
+          "MiniExcel.Core": "2.0.0-preview.4",
+          "MiniExcel.Csv": "2.0.0-preview.4",
+          "MiniExcel.OpenXml": "2.0.0-preview.4"
+        }
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
@@ -294,6 +350,27 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "u8PB9/v02C8mBXzl0vJ7bOyC020zOP+T1mRct+KA46DqZkB40XtsNn9pGD0QowTRsT6R4jPCghn+yAODn2UMMw=="
+      },
+      "MiniExcel.Core": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "Edp5uDXOnfWTwTJsHK0p5f+fU83TW0yoC0xtkW2IG6AF72eel2EC0YoUcpR5RUHsBKX/h2+iXh7hP/d7HT0fWw=="
+      },
+      "MiniExcel.Csv": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "X4qg5e/iVsdBEU5Ic+ccFdzZ29hTwzHIZwzy+CfY6cnoGaoS3WbEtBWwlpR116qymtol+l3RtKd4mPbQcezMww==",
+        "dependencies": {
+          "MiniExcel.Core": "2.0.0-preview.4"
+        }
+      },
+      "MiniExcel.OpenXml": {
+        "type": "Transitive",
+        "resolved": "2.0.0-preview.4",
+        "contentHash": "TKzPQLz+SZGgS6sJgJorwP4Lsj9Izu1D8SPYhUu7u8teobYR/usrgGX5iFRohfLu0mgFIwOnDY+9bL3f3M79MA==",
+        "dependencies": {
+          "MiniExcel.Core": "2.0.0-preview.4"
+        }
       },
       "Newtonsoft.Json": {
         "type": "Transitive",

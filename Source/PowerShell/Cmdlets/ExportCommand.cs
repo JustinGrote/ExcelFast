@@ -2,11 +2,11 @@ namespace ExcelFast.PowerShell.Cmdlets;
 
 using System;
 using System.Threading.Channels;
-using System.Collections.Concurrent;
 
 using ExcelFast.Extensions;
 
-using MiniExcelLibs;
+using MiniExcelLib;
+using MiniExcelLib.OpenXml;
 
 using FilePath = Path;
 
@@ -57,19 +57,19 @@ public class ExportCommand : TaskCmdlet
 
   private int rowsExported;
 
-#if NET472
-  private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
-#else
+  // #if NET472
+  //   private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
+  // #else
   private readonly Channel<Dictionary<string, object>> exportQueue;
-#endif
+  // #endif
 
   public ExportCommand()
   {
-#if NET472
-    exportQueue = [];
-#else
+    // #if NET472
+    //     exportQueue = [];
+    // #else
     exportQueue = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(InputQueueSize));
-#endif
+    // #endif
   }
 
   protected override async Task Begin()
@@ -149,11 +149,11 @@ public class ExportCommand : TaskCmdlet
 
     try
     {
-#if NET472
-      exportQueue.CompleteAdding();
-#else
+      // #if NET472
+      //       exportQueue.CompleteAdding();
+      // #else
       exportQueue.Writer.TryComplete();
-#endif
+      // #endif
 
       Debug("Waiting for export task to complete.");
 
@@ -193,7 +193,16 @@ public class ExportCommand : TaskCmdlet
         continue;
       }
 
-      Dictionary<string, object> row = inputObject.ToFlatDictionary();
+      await Post(() =>
+      {
+        var row = inputObject.ToFlatDictionary();
+        // #if NET472
+        //         exportQueue.Add(row, PipelineStopToken);
+        // #else
+        exportQueue.Writer.TryWrite(row);
+        // #endif
+      });
+
       try
       {
         rowsExported++;
@@ -202,11 +211,6 @@ public class ExportCommand : TaskCmdlet
           continue;
         }
 
-#if NET472
-        exportQueue.Add(row, PipelineStopToken);
-#else
-        await exportQueue.Writer.WriteAsync(row, PipelineStopToken);
-#endif
         StartExportTaskIfNeeded();
       }
       catch (OperationCanceledException)
@@ -224,19 +228,20 @@ public class ExportCommand : TaskCmdlet
       return;
     }
 
-#if NET472
-    var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
-#else
+    // #if NET472
+    //     var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
+    // #else
     var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
-#endif
+    // #endif
 
     Debug("Starting MiniExcel export task.");
 
-    exportTask = Task.Run(async () => await MiniExcel.SaveAsAsync(
+    var exporter = MiniExcel.Exporters.GetOpenXmlExporter();
+
+    exportTask = Task.Run(async () => await exporter.ExportAsync(
       Destination,
       queue,
       sheetName: SheetName,
-      excelType: ExcelType.XLSX,
       overwriteFile: Force.IsPresent,
       cancellationToken: PipelineStopToken
     ), PipelineStopToken);
@@ -245,11 +250,11 @@ public class ExportCommand : TaskCmdlet
   protected override async Task Clean()
   {
     Debug("Stopping export process due to pipeline stop request.");
-#if NET472
-    exportQueue.CompleteAdding();
-#else
+    // #if NET472
+    //     exportQueue.CompleteAdding();
+    // #else
     exportQueue.Writer.TryComplete();
-#endif
+    // #endif
 
     if (exportTask is null)
     {
