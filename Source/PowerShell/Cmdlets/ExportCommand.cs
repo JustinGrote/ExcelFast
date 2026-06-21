@@ -57,19 +57,11 @@ public class ExportCommand : TaskCmdlet
 
   private int rowsExported;
 
-  // #if NET472
-  //   private readonly BlockingCollection<Dictionary<string, object>> exportQueue;
-  // #else
   private readonly Channel<Dictionary<string, object>> exportQueue;
-  // #endif
 
   public ExportCommand()
   {
-    // #if NET472
-    //     exportQueue = [];
-    // #else
     exportQueue = Channel.CreateBounded<Dictionary<string, object>>(new BoundedChannelOptions(InputQueueSize));
-    // #endif
   }
 
   protected override async Task Begin()
@@ -149,14 +141,9 @@ public class ExportCommand : TaskCmdlet
 
     try
     {
-      // #if NET472
-      //       exportQueue.CompleteAdding();
-      // #else
+
       exportQueue.Writer.TryComplete();
-      // #endif
-
       Debug("Waiting for export task to complete.");
-
       int[] result = await exportTask;
 
       Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
@@ -196,11 +183,7 @@ public class ExportCommand : TaskCmdlet
       await Post(() =>
       {
         var row = inputObject.ToFlatDictionary();
-        // #if NET472
-        //         exportQueue.Add(row, PipelineStopToken);
-        // #else
         exportQueue.Writer.TryWrite(row);
-        // #endif
       });
 
       try
@@ -228,16 +211,10 @@ public class ExportCommand : TaskCmdlet
       return;
     }
 
-    // #if NET472
-    //     var queue = exportQueue.GetConsumingEnumerable(PipelineStopToken);
-    // #else
     var queue = exportQueue.Reader.ReadAllAsync(PipelineStopToken);
-    // #endif
 
     Debug("Starting MiniExcel export task.");
-
     var exporter = MiniExcel.Exporters.GetOpenXmlExporter();
-
     exportTask = Task.Run(async () => await exporter.ExportAsync(
       Destination,
       queue,

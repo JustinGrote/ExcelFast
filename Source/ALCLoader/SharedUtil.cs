@@ -1,5 +1,5 @@
 using System.Reflection;
-#if NET5_0_OR_GREATER
+#if NET
 using System.Runtime.Loader;
 #endif
 
