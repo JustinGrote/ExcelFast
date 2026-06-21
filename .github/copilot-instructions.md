@@ -1,5 +1,10 @@
 # Project Coding Standards
 
+## MiniExcel Guidelines
+- Use the 2.0 API when possible, but the 1.0 API is still supported and may be used if the 2.0 API does not meet the needs of a particular scenario. Use a comment that begins with HACK: to note any use of the 1.0 API, and include a link to the relevant issue in the GitHub repository if applicable.
+- Use the README for implementation guidelines https://raw.githubusercontent.com/mini-software/MiniExcel/refs/heads/master/README-V2.md
+- Consider the upgrade notes https://raw.githubusercontent.com/mini-software/MiniExcel/refs/heads/master/V2-Upgrade-Notes.md
+
 ## CSharp C# Guidelines
 
 - Use File Scoped Namespaces
