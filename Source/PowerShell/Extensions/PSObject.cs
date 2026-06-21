@@ -2,13 +2,15 @@ namespace ExcelFast.Extensions;
 
 using System.Collections;
 using System.Management.Automation.Runspaces;
+using System.Reflection;
 
 public static class PSObjectExtensions
 {
 	extension(PSObject psobject)
 	{
-    public Dictionary<string, object> ToFlatDictionary()
+    public Dictionary<string, object> ToFlatDictionary(out Dictionary<string, string> conversionErrors, bool includeUnexportableProperties = false)
     {
+      conversionErrors = new Dictionary<string, string>();
       Dictionary<string, object> dictionary = new Dictionary<string, object>();
 
       object baseObject = psobject.BaseObject;
@@ -42,13 +44,54 @@ public static class PSObjectExtensions
       }
 
       // Standard PSObject properties (PSCustomObject, .NET objects, etc.)
-      foreach (PSPropertyInfo property in psobject.Properties)
+      PSMemberInfoCollection<PSPropertyInfo> properties = psobject.Properties;
+      foreach (PSPropertyInfo property in properties)
       {
         if (string.IsNullOrWhiteSpace(property.Name))
         {
           continue;
         }
-        dictionary[property.Name] = LanguagePrimitives.ConvertTo<string>(property.Value);
+
+        try
+        {
+          object? propertyValue = property.Value;
+          dictionary[property.Name] = LanguagePrimitives.ConvertTo<string>(propertyValue);
+        }
+        catch (Exception ex)
+        {
+          conversionErrors[property.Name] = $"could not be processed: {ex.Message}";
+          if (includeUnexportableProperties)
+          {
+            dictionary[property.Name] = string.Empty;
+          }
+        }
+      }
+
+      if (dictionary.Count > 0)
+      {
+        return dictionary;
+      }
+
+      foreach (PropertyInfo property in baseObject.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+      {
+        if (property.GetIndexParameters().Length > 0 || string.IsNullOrWhiteSpace(property.Name))
+        {
+          continue;
+        }
+
+        try
+        {
+          object? propertyValue = property.GetValue(baseObject);
+          dictionary[property.Name] = LanguagePrimitives.ConvertTo<string>(propertyValue);
+        }
+        catch (Exception ex)
+        {
+          conversionErrors[property.Name] = $"could not be processed: {ex.Message}";
+          if (includeUnexportableProperties)
+          {
+            dictionary[property.Name] = string.Empty;
+          }
+        }
       }
 
       return dictionary;

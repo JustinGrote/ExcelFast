@@ -15,15 +15,16 @@ public class SaveCommand : BetterPSCmdlet
 	[NotNull]
 	public IXLWorkbook? Workbook { get; set; }
 
-	[Parameter(
-					Position = 1,
-					HelpMessage = "Destination where the Excel file will be saved. If not specified, the workbook will be saved to its current location."
-	)]
-	[ValidateNotNullOrEmpty]
-	[NotNull]
-	public string? Destination { get; set; }
+  [Parameter(
+          Position = 1,
+          HelpMessage = "Destination where the Excel file will be saved. If not specified, the workbook will be saved to its current location."
+  )]
+  [ValidateNotNullOrEmpty]
+  [NotNull]
+  [Alias("Path")]
+  public string? Destination { get; set; }
 
-	[Parameter(
+  [Parameter(
 					HelpMessage = "If specified, overwrites the file if it exists."
 	)]
 	public SwitchParameter Force { get; set; }

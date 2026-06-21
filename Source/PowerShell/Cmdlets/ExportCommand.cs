@@ -14,7 +14,7 @@ using FilePath = Path;
 [Alias("exwb")]
 public class ExportCommand : TaskCmdlet
 {
-	[Parameter(
+  [Parameter(
     Mandatory = true,
     Position = 0,
     ValueFromPipelineByPropertyName = true,
@@ -22,6 +22,7 @@ public class ExportCommand : TaskCmdlet
   )]
   [ValidateNotNullOrEmpty]
   [NotNull]
+  [Alias("Path")]
   public string? Destination { get; set; }
 
   [Parameter(
@@ -49,6 +50,11 @@ public class ExportCommand : TaskCmdlet
     HelpMessage = "Bounded queue capacity used to stream rows to the Excel writer. Larger values reduce producer stalls for large exports."
   )]
   public int InputQueueSize { get; set; } = 1024;
+
+  [Parameter(
+    HelpMessage = "Include properties that could not be converted or accessed by exporting a placeholder value describing the failure."
+  )]
+  public SwitchParameter IncludeUnexportableProperties { get; set; }
 
   // The running task to export data to Excel
   private Task<int[]>? exportTask;
@@ -180,14 +186,21 @@ public class ExportCommand : TaskCmdlet
         continue;
       }
 
-      await Post(() =>
-      {
-        var row = inputObject.ToFlatDictionary();
-        exportQueue.Writer.TryWrite(row);
-      });
-
       try
       {
+        await Post(() =>
+        {
+          Dictionary<string, string> conversionErrors;
+          var row = inputObject.ToFlatDictionary(out conversionErrors, IncludeUnexportableProperties.IsPresent);
+
+          foreach (KeyValuePair<string, string> conversionError in conversionErrors)
+          {
+            Debug($"Skipping property '{conversionError.Key}' because it {conversionError.Value}");
+          }
+
+          exportQueue.Writer.TryWrite(row);
+        });
+
         rowsExported++;
         if (whatIfSpecified)
         {
@@ -200,6 +213,10 @@ public class ExportCommand : TaskCmdlet
       {
         Debug("Export row enqueue canceled.");
         return;
+      }
+      catch (Exception ex)
+      {
+        Debug($"Unable to convert input object to a row for export: {ex.Message}");
       }
     }
   }

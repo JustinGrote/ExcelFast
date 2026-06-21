@@ -204,5 +204,31 @@ user2,user2@example.com
 			$actual[0].Value | Should -Be 1
 			$actual[1].Value | Should -Be 2
 		}
+
+		It 'Should skip properties that throw when accessed' {
+			$row = [PSCustomObject]@{ Name = 'Throwing'; Value = 'Safe' }
+			$row | Add-Member -MemberType ScriptProperty -Name Broken -Value { throw [System.InvalidOperationException]::new('Simulated failure') } -Force
+
+			{ $row | Export-Workbook -Destination $DestPath -ErrorAction Stop } | Should -Not -Throw
+
+			$actual = Import-Workbook -Path $DestPath
+			$actual | Should -HaveCount 1
+			$actual[0].Name | Should -Be 'Throwing'
+			$actual[0].Value | Should -Be 'Safe'
+		}
+
+		It 'Should include unexportable properties when requested' {
+			$row = [PSCustomObject]@{ Name = 'Throwing'; Value = 'Safe' }
+			$row | Add-Member -MemberType ScriptProperty -Name Broken -Value { throw [System.InvalidOperationException]::new('Simulated failure') } -Force
+
+			{ $row | Export-Workbook -Destination $DestPath -IncludeUnexportableProperties -ErrorAction Stop } | Should -Not -Throw
+
+			$actual = Import-Workbook -Path $DestPath
+			$actual | Should -HaveCount 1
+      $actual[0].Name | Should -Be 'Throwing'
+      $actual[0].Value | Should -Be 'Safe'
+			$actual[0].PSObject.Properties.Name | Should -Contain 'Broken'
+			$actual[0].Broken | Should -BeNullOrEmpty
+		}
 	}
 }
