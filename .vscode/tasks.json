@@ -1,8 +1,15 @@
 {
 	"version": "2.0.0",
+  "windows": {
+    "options": {
+      "shell": {
+        "executable": "pwsh.exe",
+      }
+    }
+  },
 	"options": {
 		"shell": {
-			"executable": "pwsh",
+      "executable": "pwsh",
 			"args": ["-noprofile", "-noninteractive", "-command"]
 		}
 	},
@@ -10,7 +17,7 @@
 		{
 			"label": "build",
 			"type": "shell",
-			"command": "Invoke-Build",
+      "command": "Invoke-Build Build",
 			"group": {
 				"kind": "build",
 				"isDefault": true
@@ -29,7 +36,7 @@
 		{
 			"label": "test",
 			"type": "shell",
-			"command": "Invoke-Pester -Output Detailed",
+      "command": "Invoke-Build Test",
 			"group": {
 				"kind": "test",
 				"isDefault": true
