@@ -10,19 +10,22 @@ param(
 
 	[string]$PublishPath = (Join-Path $PSScriptRoot 'Artifacts\Module'),
 
-	[ValidateNotNullOrWhiteSpace()]
-	[string]$ManifestPath = (Join-Path $PublishPath "$ModuleName.psd1"),
+  #Use to specify a specific test when
+  [string]$TestName,
 
-	#Specify this for a non-debug release
-	[switch]$Production,
+  [ValidateNotNullOrWhiteSpace()]
+  [string]$ManifestPath = (Join-Path $PublishPath "$ModuleName.psd1"),
 
-	#Dont create a .nupkg
-	[switch]$NoPackage,
+  #Specify this for a non-debug release
+  [switch]$Production,
 
-	[string]$PackagePath = (Split-Path $PublishPath -Parent),
+  #Dont create a .nupkg
+  [switch]$NoPackage,
 
-	#Don't build for Windows PowerShell 5.1. This is primarily intended as a workaround for CI builds on Linux where the .NET Framework assemblies cause issues.
-	[switch]$SkipPS51
+  [string]$PackagePath = (Split-Path $PublishPath -Parent),
+
+  #Don't build for Windows PowerShell 5.1. This is primarily intended as a workaround for CI builds on Linux where the .NET Framework assemblies cause issues.
+  [switch]$SkipPS51
 )
 
 
@@ -31,81 +34,81 @@ if ($ENV:CI -or $ENV:GITHUB_ACTIONS) {
 }
 
 Set-BuildHeader {
-	param($Path)
-	"👷 $Path $(Get-BuildSynopsis $Task)"
+  param($Path)
+  "👷 $Path $(Get-BuildSynopsis $Task)"
 }
 Set-BuildFooter {
-	param($Path)
-	"✅ $Path $(Get-BuildSynopsis $Task)"
+  param($Path)
+  "✅ $Path $(Get-BuildSynopsis $Task)"
 }
 
 $ErrorActionPreference = 'Stop'
 
 # This gets awkward in the context of the cast parameter so we do it here.
 if (-not $Version -and $ENV:MODULE_VERSION) {
-	$Version = $ENV:MODULE_VERSION
+  $Version = $ENV:MODULE_VERSION
 }
 
 Task Clean {
-	#Clean the publish directory
-	Write-Host -Fore Cyan "Cleaning publish directory: $PublishPath"
-	$env:GIT_ASK_YESNO = 'false'
-	git clean -fdx --no-interactive -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
-	if ($LASTEXITCODE -ne 0) {
+  #Clean the publish directory
+  Write-Host -Fore Cyan "Cleaning publish directory: $PublishPath"
+  $env:GIT_ASK_YESNO = 'false'
+  git clean -fdx --no-interactive -- (Join-Path $PSScriptRoot 'Artifacts\Module') (Join-Path $PSScriptRoot 'Artifacts\*.nupkg')
+  if ($LASTEXITCODE -ne 0) {
     throw "Failed to clean publish directory. Git clean exited with code $LASTEXITCODE. A file is probably locked. Is the module loaded in a running PowerShell window?"
-	}
+  }
 }
 
 Task CompilePS7 {
-	$projectFile = Get-ChildItem -Path $PSScriptRoot -Filter '*.csproj' -Recurse | Select-Object -First 1
-	if (-not $projectFile) {
-		throw 'Could not find a .csproj file to determine target framework.'
-	}
+  $projectFile = Get-ChildItem -Path $PSScriptRoot -Filter '*.csproj' -Recurse | Select-Object -First 1
+  if (-not $projectFile) {
+    throw 'Could not find a .csproj file to determine target framework.'
+  }
 
-	[xml]$projectXml = Get-Content -Path $projectFile.FullName -Raw
-	$targetFramework = @($projectXml.Project.PropertyGroup.TargetFramework | Where-Object { $_ })[0]
-	if (-not $targetFramework) {
-		$targetFrameworks = @($projectXml.Project.PropertyGroup.TargetFrameworks | Where-Object { $_ })[0]
-		if ($targetFrameworks) {
-			$targetFramework = ($targetFrameworks -split ';')[0]
-		}
-	}
+  [xml]$projectXml = Get-Content -Path $projectFile.FullName -Raw
+  $targetFramework = @($projectXml.Project.PropertyGroup.TargetFramework | Where-Object { $_ })[0]
+  if (-not $targetFramework) {
+    $targetFrameworks = @($projectXml.Project.PropertyGroup.TargetFrameworks | Where-Object { $_ })[0]
+    if ($targetFrameworks) {
+      $targetFramework = ($targetFrameworks -split ';')[0]
+    }
+  }
 
-	if (-not $targetFramework) {
-		throw "Could not determine TargetFramework from $($projectFile.FullName)."
-	}
+  if (-not $targetFramework) {
+    throw "Could not determine TargetFramework from $($projectFile.FullName)."
+  }
 
-	#TODO: Get framework from csproj
-	$framework = 'net8.0'
-	$publishArgs = @(
-		'-c', ($Production ? 'Release' : 'Debug'),
-		'--version-suffix', $($Production ? '' : 'dev'),
-		'-f', $framework,
-		'-o', (Join-Path $PSScriptRoot "Artifacts\Module\lib\$framework"),
-		'-p:GenerateDocumentationFile=true',
-		(Join-Path $PSScriptRoot 'Source\PowerShell\PowerShell.csproj')
-	)
-	dotnet publish @publishArgs
+  #TODO: Get framework from csproj
+  $framework = 'net8.0'
+  $publishArgs = @(
+    '-c', ($Production ? 'Release' : 'Debug'),
+    '--version-suffix', $($Production ? '' : 'dev'),
+    '-f', $framework,
+    '-o', (Join-Path $PSScriptRoot "Artifacts\Module\lib\$framework"),
+    '-p:GenerateDocumentationFile=true',
+    (Join-Path $PSScriptRoot 'Source\PowerShell\PowerShell.csproj')
+  )
+  dotnet publish @publishArgs
 }
 
 Task CompilePS51 {
-	#TODO: Get framework from csproj
-	$framework = 'net472'
-	$publishArgs = @(
-		'-c', ($Production ? 'Release' : 'Debug'),
-		'--version-suffix', $($Production ? '' : 'dev'),
-		'-f', $framework,
-		'-o', (Join-Path $PSScriptRoot "Artifacts\Module\lib\$framework"),
-		'-p:GenerateDocumentationFile=true',
-		(Join-Path $PSScriptRoot 'Source\PowerShell\PowerShell.csproj')
-	)
-	dotnet publish @publishArgs
+  #TODO: Get framework from csproj
+  $framework = 'net472'
+  $publishArgs = @(
+    '-c', ($Production ? 'Release' : 'Debug'),
+    '--version-suffix', $($Production ? '' : 'dev'),
+    '-f', $framework,
+    '-o', (Join-Path $PSScriptRoot "Artifacts\Module\lib\$framework"),
+    '-p:GenerateDocumentationFile=true',
+    (Join-Path $PSScriptRoot 'Source\PowerShell\PowerShell.csproj')
+  )
+  dotnet publish @publishArgs
 }
 
 Task CopyModuleFiles {
-	# Copy the files and preserve directores
-	$sourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Module'
-	Copy-Item -Path (Join-Path $sourcePath '*') -Destination $PublishPath -Force -Recurse
+  # Copy the files and preserve directores
+  $sourcePath = Join-Path $PSScriptRoot 'Source\PowerShell\Module'
+  Copy-Item -Path (Join-Path $sourcePath '*') -Destination $PublishPath -Force -Recurse
 }
 
 Task Build CompileAll, CopyModuleFiles, {
@@ -274,6 +277,9 @@ Task Pester {
     $config.output.Verbosity = 'Detailed'
     $config.TestResult.Enabled = $true
     $config.TestResult.OutputFormat = 'NUnitXml'
+    if ($USING:TestName) {
+      $config.Filter.FullName = $USING:TestName
+    }
     Invoke-Pester -Configuration $config
   } | Receive-Job -Wait -AutoRemoveJob
 }
@@ -283,7 +289,13 @@ Task Pester-WinPS {
     Write-Host -ForegroundColor Yellow 'Skipping Pester-WinPS: non-Windows platform detected.'
     return
   }
-  & powershell.exe -noprofile -c {
+  $jsonParams = @{
+    TestName = $TestName
+  } | ConvertTo-Json -Compress
+
+  powershell.exe -NoProfile -Command {
+    param($JsonParams)
+    $params = $JsonParams | ConvertFrom-Json
     $pester = Get-Module -FullyQualified @{ModuleName = 'Pester'; ModuleVersion = '5.0' } -ListAvailable -EA 0
     if (-not $pester) {
       Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
@@ -294,8 +306,11 @@ Task Pester-WinPS {
     $config.output.Verbosity = 'Detailed'
     $config.TestResult.Enabled = $true
     $config.TestResult.OutputFormat = 'NUnitXml'
+    if ($params.TestName) {
+      $config.Filter.FullName = $params.TestName
+    }
     Invoke-Pester -Configuration $config
-  }
+  } -Args $jsonParams
 }
 
 Task CompileAll CompilePS7, CompilePS51
