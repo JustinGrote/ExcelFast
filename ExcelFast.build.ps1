@@ -295,11 +295,16 @@ Task Pester-WinPS {
 
   powershell.exe -NoProfile -Command {
     param($JsonParams)
+    # Include the Windows PowerShell paths to PSModulePath, since we are starting from pwsh.
+    $winPSModulePath = Join-Path [System.Environment]::GetFolderPath('MyDocuments') 'WindowsPowerShell\Modules'
+    $winPSSystemModulePath = Join-Path $PSHome 'Modules'
+    $env:PSModulePath = "$winPSModulePath;$winPSSystemModulePath;$env:PSModulePath"
+
     $params = $JsonParams | ConvertFrom-Json
     $pester = Get-Module -FullyQualified @{ModuleName = 'Pester'; ModuleVersion = '5.0' } -ListAvailable -EA 0
     if (-not $pester) {
       Write-Host -ForegroundColor Cyan 'Pester not found. Installing Pester...'
-      Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop
+      Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser -ErrorAction Stop -SkipPublisherCheck
     }
     $config = New-PesterConfiguration
     $config.run.throw = $true
