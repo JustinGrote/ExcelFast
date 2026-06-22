@@ -26,5 +26,7 @@
 - When asserting failures, use `Should -Throw` with `-ErrorAction Stop` and verify the expected `-ExceptionType` or `-ErrorId`.
 - Keep tests readable and focused on observable outcomes such as return type, object properties, counts, and error behavior.
 - Name tests clearly to describe the scenario and expected result.
-- Run tests frequently during development to catch issues early and ensure coverage of new code.
-- To run tests, first try `Invoke-Build Test` to run all tests, or `Invoke-Build Test -TestName <test name>` to run a specific test.
+- After making changes to the code, run tests in the following order:
+  1. Run tests specific to your changes or the cmdlet you changed first to get quick feedback. You can do this by running `Invoke-Build Pester -TestName <TestName>` with a filter for the specific test or tests you want to run. Construct the test name filter using the Describe, Context, and It block names combined with dots. For example, if you have a test defined as `Describe 'New-ExcelFile' { Context 'with valid parameters' { It 'should create a new Excel file' { ... } } }`, you could run just that test with `Invoke-Build Pester -TestName 'New-ExcelFile.with valid parameters.should create a new Excel file'`. This allows you to quickly verify that your changes work as expected before running the full test suite.
+  2. After any individual tests you have changed pass, run `Invoke-Build Pester` to verify that the PowerShell cmdlets work as expected and that the Pester tests pass. If a test fails, investigate the failure and try to fix the code first, then fix the test if needed, then re-run the tests to verify that they pass.
+  3. If `Invoke-Build Pester` succeeds, run `Invoke-Build Pester-WinPS` if on Windows second to verify that the cmdlets work in Windows PowerShell

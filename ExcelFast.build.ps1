@@ -274,9 +274,6 @@ Task Pester {
   Start-Job -ScriptBlock {
     $config = New-PesterConfiguration
     $config.run.throw = $true
-    $config.output.Verbosity = 'Detailed'
-    $config.TestResult.Enabled = $true
-    $config.TestResult.OutputFormat = 'NUnitXml'
     if ($USING:TestName) {
       $config.Filter.FullName = $USING:TestName
     }
@@ -296,8 +293,8 @@ Task Pester-WinPS {
   powershell.exe -NoProfile -Command {
     param($JsonParams)
     # Include the Windows PowerShell paths to PSModulePath, since we are starting from pwsh.
-    $winPSModulePath = Join-Path [System.Environment]::GetFolderPath('MyDocuments') 'WindowsPowerShell\Modules'
-    $winPSSystemModulePath = Join-Path $PSHome 'Modules'
+    $winPSModulePath = Join-Path ([System.Environment]::GetFolderPath('MyDocuments')) 'WindowsPowerShell\Modules'
+    $winPSSystemModulePath = Join-Path ($PSHome) 'Modules'
     $env:PSModulePath = "$winPSModulePath;$winPSSystemModulePath;$env:PSModulePath"
 
     $params = $JsonParams | ConvertFrom-Json
@@ -308,9 +305,6 @@ Task Pester-WinPS {
     }
     $config = New-PesterConfiguration
     $config.run.throw = $true
-    $config.output.Verbosity = 'Detailed'
-    $config.TestResult.Enabled = $true
-    $config.TestResult.OutputFormat = 'NUnitXml'
     if ($params.TestName) {
       $config.Filter.FullName = $params.TestName
     }
