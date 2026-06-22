@@ -6,8 +6,7 @@
 - Consider the upgrade notes https://raw.githubusercontent.com/mini-software/MiniExcel/refs/heads/master/V2-Upgrade-Notes.md
 
 ## CSharp C# Guidelines
-
-- Use File Scoped Namespaces
+- Read the .editorconfig file for code style and formatting rules
 - Use Collection Expressions
 - Prefer explicit type over var
 - Use Linq methods for collections when appropriate
