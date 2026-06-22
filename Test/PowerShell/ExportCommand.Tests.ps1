@@ -96,6 +96,27 @@ user2,user2@example.com
 			$actual.Name | Should -Contain 'a.txt'
 			$actual.Name | Should -Contain 'b.txt'
 		}
+
+		It 'Example 6: Should apply a table style' {
+			$data = @(
+				[PSCustomObject]@{ Name = 'Item1'; Value = 100 },
+				[PSCustomObject]@{ Name = 'Item2'; Value = 200 }
+			)
+
+			Export-Workbook -Destination $DestPath -InputObject $data -TableStyle 'TableStyleMedium2' -Force
+
+			$resolvedPath = (Get-Item -LiteralPath $DestPath).FullName
+			$workbook = [ClosedXML.Excel.XLWorkbook]::new($resolvedPath)
+			try {
+				$sheet = $workbook.Worksheet(1)
+				$table = $sheet.Tables | Select-Object -First 1
+				$table | Should -Not -BeNullOrEmpty
+				$table.Theme.ToString() | Should -Be 'TableStyleMedium2'
+			}
+			finally {
+				$workbook.Dispose()
+			}
+		}
 	}
 
 	Context 'Object conversion' {

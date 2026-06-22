@@ -1,7 +1,11 @@
 namespace ExcelFast.PowerShell.Cmdlets;
 
-using System;
+using System.Collections;
+using System.Management.Automation;
+using System.Management.Automation.Language;
 using System.Threading.Channels;
+
+using ClosedXML.Excel;
 
 using ExcelFast.Extensions;
 
@@ -40,6 +44,13 @@ public class ExportCommand : TaskCmdlet
   )]
   [ValidateNotNullOrEmpty]
   public string SheetName { get; set; } = "Sheet1";
+
+  [Parameter(
+    HelpMessage = "Apply the specified ClosedXML table style to the exported table."
+  )]
+  [ValidateNotNullOrEmpty]
+  [ArgumentCompleter(typeof(TableStyleArgumentCompleter))]
+  public string TableStyle { get; set; } = "TableStyleMedium2";
 
   [Parameter(
     HelpMessage = "Forces overwriting of the destination file if it already exists."
@@ -151,6 +162,11 @@ public class ExportCommand : TaskCmdlet
       exportQueue.Writer.TryComplete();
       Debug("Waiting for export task to complete.");
       int[] result = await exportTask;
+
+      if (!string.IsNullOrWhiteSpace(TableStyle))
+      {
+        ApplyTableStyle(Destination, SheetName, TableStyle);
+      }
 
       Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
     }
@@ -267,8 +283,72 @@ public class ExportCommand : TaskCmdlet
     }
   }
 
+  private static void ApplyTableStyle(string workbookPath, string sheetName, string? tableStyle)
+  {
+    if (string.IsNullOrWhiteSpace(tableStyle))
+    {
+      return;
+    }
+
+    using XLWorkbook workbook = new XLWorkbook(workbookPath);
+    IXLWorksheet worksheet = workbook.Worksheet(sheetName);
+
+    IXLTable? table = worksheet.Tables.FirstOrDefault();
+    if (table is null)
+    {
+      IXLRange? usedRange = worksheet.RangeUsed();
+      if (usedRange is null || usedRange.IsEmpty())
+      {
+        return;
+      }
+
+      if (worksheet.AutoFilter is not null)
+      {
+        worksheet.AutoFilter.Clear();
+      }
+
+      table = usedRange.CreateTable();
+    }
+
+    XLTableTheme? parsedTheme = XLTableTheme.FromName(tableStyle ?? string.Empty);
+    if (parsedTheme is null)
+    {
+      throw new ArgumentException($"The table style '{tableStyle}' is not supported by ClosedXML.", nameof(tableStyle));
+    }
+
+    table.Theme = parsedTheme;
+    workbook.Save();
+  }
+
   private async void AssertExportTaskNotFaulted()
   {
     if (exportTask?.IsFaulted == true) await exportTask; // This will re-throw the exception from the export task to be handled by the cmdlet's error handling
+  }
+}
+
+public sealed class TableStyleArgumentCompleter : IArgumentCompleter
+{
+  public IEnumerable<CompletionResult> CompleteArgument(
+    string? commandName,
+    string? parameterName,
+    string? wordToComplete,
+    CommandAst? commandAst,
+    IDictionary? fakeBoundParameters)
+  {
+    string prefix = wordToComplete ?? string.Empty;
+
+    foreach (XLTableTheme theme in XLTableTheme.GetAllThemes())
+    {
+      string value = theme.Name;
+      if (string.IsNullOrWhiteSpace(value))
+      {
+        continue;
+      }
+
+      if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+      {
+        yield return new CompletionResult(value, value, CompletionResultType.ParameterValue, value);
+      }
+    }
   }
 }

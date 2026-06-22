@@ -85,6 +85,18 @@ Get-ChildItem -Path 'C:\Data' -File | Export-Workbook -Destination 'C:\Data\File
 
 Exports file system objects to Excel with metadata.
 
+### Example 6: Apply a table style
+
+```powershell
+$data = @(
+    @{ Name = 'Item1'; Value = 100 },
+    @{ Name = 'Item2'; Value = 200 }
+)
+Export-Workbook -Destination 'C:\Data\Export.xlsx' -InputObject $data -TableStyle 'TableStyleMedium2'
+```
+
+Exports the data and applies the requested table style to the resulting table.
+
 ## PARAMETERS
 
 ### -Destination
@@ -169,6 +181,27 @@ ParameterSets:
 DontShow: false
 AcceptedValues: []
 HelpMessage: 'Name of the sheet to export to. If not specified, exports to ''Sheet1''.'
+```
+
+### -TableStyle
+
+Specifies the ClosedXML table style to apply to the exported table. Use tab completion to discover supported styles.
+
+```yaml
+Type: String
+DefaultValue: 'TableStyleMedium2'
+SupportsWildcards: false
+Aliases: []
+ParameterSets:
+- Name: (All)
+  Position: Named
+  IsRequired: false
+  ValueFromPipeline: false
+  ValueFromPipelineByPropertyName: false
+  ValueFromRemainingArguments: false
+DontShow: false
+AcceptedValues: []
+HelpMessage: 'Apply the specified ClosedXML table style to the exported table.'
 ```
 
 ### CommonParameters
