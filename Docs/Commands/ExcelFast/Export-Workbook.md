@@ -97,6 +97,18 @@ Export-Workbook -Destination 'C:\Data\Export.xlsx' -InputObject $data -TableStyl
 
 Exports the data and applies the requested table style to the resulting table.
 
+### Example 7: Apply a table name
+
+```powershell
+$data = @(
+    @{ Name = 'Item1'; Value = 100 },
+    @{ Name = 'Item2'; Value = 200 }
+)
+Export-Workbook -Destination 'C:\Data\Export.xlsx' -InputObject $data -TableName 'SalesData'
+```
+
+Exports the data and assigns the specified name to the resulting table.
+
 ## PARAMETERS
 
 ### -Destination
@@ -202,6 +214,27 @@ ParameterSets:
 DontShow: false
 AcceptedValues: []
 HelpMessage: 'Apply the specified ClosedXML table style to the exported table.'
+```
+
+### -TableName
+
+Specifies the name of the exported table.
+
+```yaml
+Type: String
+DefaultValue: ''
+SupportsWildcards: false
+Aliases: []
+ParameterSets:
+- Name: (All)
+  Position: Named
+  IsRequired: false
+  ValueFromPipeline: false
+  ValueFromPipelineByPropertyName: false
+  ValueFromRemainingArguments: false
+DontShow: false
+AcceptedValues: []
+HelpMessage: 'Specify the name of the exported table.'
 ```
 
 ### CommonParameters

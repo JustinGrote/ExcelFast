@@ -117,6 +117,27 @@ user2,user2@example.com
 				$workbook.Dispose()
 			}
 		}
+
+		It 'Example 7: Should apply a table name' {
+			$data = @(
+				[PSCustomObject]@{ Name = 'Item1'; Value = 100 },
+				[PSCustomObject]@{ Name = 'Item2'; Value = 200 }
+			)
+
+			Export-Workbook -Destination $DestPath -InputObject $data -TableName 'SalesData' -Force
+
+			$resolvedPath = (Get-Item -LiteralPath $DestPath).FullName
+			$workbook = [ClosedXML.Excel.XLWorkbook]::new($resolvedPath)
+			try {
+				$sheet = $workbook.Worksheet(1)
+				$table = $sheet.Tables | Select-Object -First 1
+				$table | Should -Not -BeNullOrEmpty
+				$table.Name | Should -Be 'SalesData'
+			}
+			finally {
+				$workbook.Dispose()
+			}
+		}
 	}
 
 	Context 'Object conversion' {

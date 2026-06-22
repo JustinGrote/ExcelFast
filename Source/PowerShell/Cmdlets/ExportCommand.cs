@@ -53,6 +53,12 @@ public class ExportCommand : TaskCmdlet
   public string TableStyle { get; set; } = "TableStyleMedium2";
 
   [Parameter(
+    HelpMessage = "Specify the name of the exported table."
+  )]
+  [ValidateNotNullOrEmpty]
+  public string? TableName { get; set; }
+
+  [Parameter(
     HelpMessage = "Forces overwriting of the destination file if it already exists."
   )]
   public SwitchParameter Force { get; set; }
@@ -163,9 +169,9 @@ public class ExportCommand : TaskCmdlet
       Debug("Waiting for export task to complete.");
       int[] result = await exportTask;
 
-      if (!string.IsNullOrWhiteSpace(TableStyle))
+      if (!string.IsNullOrWhiteSpace(TableStyle) || !string.IsNullOrWhiteSpace(TableName))
       {
-        ApplyTableStyle(Destination, SheetName, TableStyle);
+        ApplyTableStyle(Destination, SheetName, TableStyle, TableName);
       }
 
       Verbose($"Exported {result.Sum()} rows to '{Destination}'.");
@@ -260,11 +266,7 @@ public class ExportCommand : TaskCmdlet
   protected override async Task Clean()
   {
     Debug("Stopping export process due to pipeline stop request.");
-    // #if NET472
-    //     exportQueue.CompleteAdding();
-    // #else
     exportQueue.Writer.TryComplete();
-    // #endif
 
     if (exportTask is null)
     {
@@ -283,9 +285,9 @@ public class ExportCommand : TaskCmdlet
     }
   }
 
-  private static void ApplyTableStyle(string workbookPath, string sheetName, string? tableStyle)
+  private static void ApplyTableStyle(string workbookPath, string sheetName, string? tableStyle, string? tableName = null)
   {
-    if (string.IsNullOrWhiteSpace(tableStyle))
+    if (string.IsNullOrWhiteSpace(tableStyle) && string.IsNullOrWhiteSpace(tableName))
     {
       return;
     }
@@ -293,7 +295,7 @@ public class ExportCommand : TaskCmdlet
     using XLWorkbook workbook = new XLWorkbook(workbookPath);
     IXLWorksheet worksheet = workbook.Worksheet(sheetName);
 
-    IXLTable? table = worksheet.Tables.FirstOrDefault();
+    IXLTable? table = tableName is not null ? worksheet.Table(tableName) : worksheet.Tables.FirstOrDefault();
     if (table is null)
     {
       IXLRange? usedRange = worksheet.RangeUsed();
@@ -310,13 +312,25 @@ public class ExportCommand : TaskCmdlet
       table = usedRange.CreateTable();
     }
 
-    XLTableTheme? parsedTheme = XLTableTheme.FromName(tableStyle ?? string.Empty);
-    if (parsedTheme is null)
+    if (!string.IsNullOrWhiteSpace(tableStyle))
     {
-      throw new ArgumentException($"The table style '{tableStyle}' is not supported by ClosedXML.", nameof(tableStyle));
+      XLTableTheme? parsedTheme = XLTableTheme.GetAllThemes().FirstOrDefault(theme =>
+        string.Equals(theme.Name, tableStyle, StringComparison.OrdinalIgnoreCase)
+      );
+
+      if (parsedTheme is null)
+      {
+        throw new ArgumentException($"The table style '{tableStyle}' is not supported by ClosedXML.", nameof(tableStyle));
+      }
+
+      table.Theme = parsedTheme;
     }
 
-    table.Theme = parsedTheme;
+    if (!string.IsNullOrWhiteSpace(tableName))
+    {
+      table.Name = tableName;
+    }
+
     workbook.Save();
   }
 
