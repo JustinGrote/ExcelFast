@@ -294,8 +294,12 @@ public class ExportCommand : TaskCmdlet
 
     using XLWorkbook workbook = new XLWorkbook(workbookPath);
     IXLWorksheet worksheet = workbook.Worksheet(sheetName);
+    tableName ??= string.Empty;
 
-    IXLTable? table = tableName is not null ? worksheet.Table(tableName) : worksheet.Tables.FirstOrDefault();
+    IXLTable? table = worksheet.TryGetTable(tableName ?? string.Empty, out IXLTable? matchedTable)
+      ? matchedTable
+      : worksheet.Tables.FirstOrDefault();
+
     if (table is null)
     {
       IXLRange? usedRange = worksheet.RangeUsed();
@@ -309,7 +313,9 @@ public class ExportCommand : TaskCmdlet
         worksheet.AutoFilter.Clear();
       }
 
-      table = usedRange.CreateTable();
+      table = !string.IsNullOrWhiteSpace(tableName)
+        ? usedRange.CreateTable(tableName)
+        : usedRange.CreateTable();
     }
 
     if (!string.IsNullOrWhiteSpace(tableStyle))
@@ -326,10 +332,6 @@ public class ExportCommand : TaskCmdlet
       table.Theme = parsedTheme;
     }
 
-    if (!string.IsNullOrWhiteSpace(tableName))
-    {
-      table.Name = tableName;
-    }
 
     workbook.Save();
   }
