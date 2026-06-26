@@ -29,6 +29,10 @@ $data | Export-Workbook path/to/newexcel.xlsx
 | imwb  | Import-Workbook |
 | gwb   | Get-Workbook  |
 | svwb  | Save-Workbook  |
+| aws   | Add-Worksheet |
+| rws   | Remove-Worksheet |
+| mws   | Move-Worksheet |
+| atbl  | Add-Table |
 
 ## Development
 Want to contribute? Check out the [Development Documentation](DEVELOPMENT.MD)
